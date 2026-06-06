@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { CardForm, type CardFormValues } from "@/components/CardForm";
 import { ImageUpload } from "@/components/ImageUpload";
 
 const samplePhoto =
@@ -18,30 +19,27 @@ const samplePhoto =
 export default function Home() {
   const [photo, setPhoto] = useState<string | null>(null);
 
+  const handleSubmit = (values: CardFormValues) => {
+    // Card generation lands next; for now just log what the booth collected.
+    console.log("card request", { ...values, hasPhoto: Boolean(photo) });
+  };
+
   return (
-    <main className="min-h-screen px-5 py-8 text-[var(--gc-black)] sm:px-8">
-      <div className="mx-auto max-w-2xl">
-        <p className="text-sm font-bold uppercase tracking-[0.2em] text-[var(--gc-orange)]">
-          Gettysburg College Edition
-        </p>
-        <h1 className="mt-2 text-3xl font-black text-[var(--gc-blue)]">
-          CardifyBooth
-        </h1>
-
-        <div className="mt-6">
-          <ImageUpload
-            photo={photo}
-            onUpload={setPhoto}
-            onChooseAnother={() => setPhoto(null)}
-            samplePhoto={samplePhoto}
-          />
-        </div>
-
-        {photo && (
-          <p className="mt-4 text-sm font-semibold text-[var(--gc-gray)]">
-            Photo captured — the card form comes next.
-          </p>
-        )}
+    <main className="min-h-screen px-5 py-4 text-[var(--gc-black)] sm:px-8 lg:h-dvh lg:overflow-hidden">
+      <div className="mx-auto h-full max-w-[1440px]">
+        <CardForm
+          isGenerating={false}
+          photoReady={Boolean(photo)}
+          mediaSlot={
+            <ImageUpload
+              photo={photo}
+              onUpload={setPhoto}
+              onChooseAnother={() => setPhoto(null)}
+              samplePhoto={samplePhoto}
+            />
+          }
+          onSubmit={handleSubmit}
+        />
       </div>
     </main>
   );
