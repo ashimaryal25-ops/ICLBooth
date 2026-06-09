@@ -1,15 +1,42 @@
 "use client";
 
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Keyboard as KeyboardIcon } from "lucide-react";
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import Keyboard from "react-simple-keyboard";
 
 const MAX_NAME_LENGTH = 28;
+
+type ActiveField = "name" | "selfDescription" | null;
 
 export interface CardFormValues {
   name: string;
   selfDescription: string;
 }
+
+const keyboardLayout = {
+  default: [
+    "1 2 3 4 5 6 7 8 9 0",
+    "q w e r t y u i o p",
+    "a s d f g h j k l",
+    "{shift} z x c v b n m {bksp}",
+    "{space} , . ' {done}",
+  ],
+  shift: [
+    "1 2 3 4 5 6 7 8 9 0",
+    "Q W E R T Y U I O P",
+    "A S D F G H J K L",
+    "{shift} Z X C V B N M {bksp}",
+    "{space} , . ! ? {done}",
+  ],
+};
+
+const keyboardDisplay = {
+  "{bksp}": "Backspace",
+  "{shift}": "Shift",
+  "{space}": "Space",
+  "{done}": "Done",
+};
 
 interface CardFormProps {
   isGenerating: boolean;
@@ -21,10 +48,51 @@ interface CardFormProps {
 export function CardForm({ isGenerating, photoReady = true, mediaSlot, onSubmit }: CardFormProps) {
   const [name, setName] = useState("");
   const [selfDescription, setSelfDescription] = useState("");
+  const [activeField, setActiveField] = useState<ActiveField>(null);
+  const [layoutName, setLayoutName] = useState<"default" | "shift">("default");
 
   const canSubmit = useMemo(
     () => photoReady && name.trim().length > 0 && selfDescription.trim().length >= 8,
     [photoReady, name, selfDescription],
+  );
+
+  const focusField = useCallback((field: Exclude<ActiveField, null>) => {
+    setActiveField(field);
+    setLayoutName("default");
+  }, []);
+
+  const handleKeyPress = useCallback(
+    (button: string) => {
+      if (button === "{shift}") {
+        setLayoutName((current) => (current === "default" ? "shift" : "default"));
+        return;
+      }
+      if (button === "{done}") {
+        setActiveField(null);
+        return;
+      }
+      if (!activeField) return;
+
+      const setter = activeField === "name" ? setName : setSelfDescription;
+
+      if (button === "{bksp}") {
+        setter((current) => current.slice(0, -1));
+      } else if (button === "{space}") {
+        setter((current) =>
+          activeField === "name"
+            ? `${current} `.slice(0, MAX_NAME_LENGTH)
+            : `${current} `,
+        );
+      } else {
+        setter((current) =>
+          activeField === "name"
+            ? `${current}${button}`.slice(0, MAX_NAME_LENGTH)
+            : `${current}${button}`,
+        );
+        if (layoutName === "shift") setLayoutName("default");
+      }
+    },
+    [activeField, layoutName],
   );
 
   return (
@@ -33,6 +101,7 @@ export function CardForm({ isGenerating, photoReady = true, mediaSlot, onSubmit 
       onSubmit={(event) => {
         event.preventDefault();
         if (!canSubmit) return;
+        setActiveField(null);
         onSubmit({
           name: name.trim(),
           selfDescription: selfDescription.trim(),
@@ -83,11 +152,17 @@ export function CardForm({ isGenerating, photoReady = true, mediaSlot, onSubmit 
                 autoComplete="off"
                 autoCorrect="off"
                 spellCheck={false}
+                inputMode="none"
                 value={name}
                 maxLength={MAX_NAME_LENGTH}
+                onFocus={() => focusField("name")}
                 onChange={(event) => setName(event.target.value.slice(0, MAX_NAME_LENGTH))}
                 placeholder="Your name"
-                className="h-12 rounded-[7px] border border-black/18 bg-white px-3 text-base font-semibold text-[#1b1a17] outline-none placeholder:text-[#a49787] focus:border-[var(--gc-orange)] focus:ring-2 focus:ring-[var(--gc-orange)]/20"
+                className={`h-12 rounded-[7px] border bg-white px-3 text-base font-semibold text-[#1b1a17] outline-none placeholder:text-[#a49787] ${
+                  activeField === "name"
+                    ? "border-[var(--gc-orange)] ring-2 ring-[var(--gc-orange)]/20"
+                    : "border-black/18"
+                }`}
               />
             </label>
           </div>
@@ -96,12 +171,46 @@ export function CardForm({ isGenerating, photoReady = true, mediaSlot, onSubmit 
             Describe yourself in 1-2 sentences
             <textarea
               id="self-description"
+              inputMode="none"
               value={selfDescription}
+              onFocus={() => focusField("selfDescription")}
               onChange={(event) => setSelfDescription(event.target.value)}
               placeholder="What do you enjoy, make, lead, study, or help with?"
-              className="card-description h-[112px] w-full resize-none rounded-[7px] border border-black/18 bg-white px-3 py-3 text-base font-medium leading-6 text-[#1b1a17] outline-none placeholder:text-[#a49787] focus:border-[var(--gc-orange)] focus:ring-2 focus:ring-[var(--gc-orange)]/20"
+              className={`card-description h-[112px] w-full resize-none rounded-[7px] border bg-white px-3 py-3 text-base font-medium leading-6 text-[#1b1a17] outline-none placeholder:text-[#a49787] ${
+                activeField === "selfDescription"
+                  ? "border-[var(--gc-orange)] ring-2 ring-[var(--gc-orange)]/20"
+                  : "border-black/18"
+              }`}
             />
           </label>
+
+          <div className="mt-3 min-h-0 shrink-0 rounded-[8px] border border-black/14 bg-[#e9e1d5] p-2.5">
+            <div className="mb-2 flex h-6 items-center justify-between gap-3 px-1">
+              <span className="inline-flex items-center gap-2 text-xs font-bold text-[#5e554a]">
+                <KeyboardIcon size={16} />
+                {activeField
+                  ? `Typing: ${activeField === "name" ? "name" : "description"}`
+                  : "Tap a field to start typing"}
+              </span>
+              {activeField && (
+                <button
+                  type="button"
+                  onClick={() => setActiveField(null)}
+                  className="h-7 rounded-[6px] border border-black/15 bg-white px-3 text-xs font-bold text-[#1b1a17]"
+                >
+                  Close
+                </button>
+              )}
+            </div>
+            <Keyboard
+              layoutName={layoutName}
+              layout={keyboardLayout}
+              display={keyboardDisplay}
+              onKeyPress={handleKeyPress}
+              theme="hg-theme-default booth-kb"
+              preventMouseDownDefault
+            />
+          </div>
 
           <div className="mt-3 flex min-h-12 shrink-0 items-center justify-between gap-4 border-t border-black/12 pt-3">
             <p className="text-xs font-semibold text-[#6d6255]">
@@ -120,9 +229,30 @@ export function CardForm({ isGenerating, photoReady = true, mediaSlot, onSubmit 
       </div>
 
       <style>{`
+        .booth-kb.hg-theme-default { background: transparent; padding: 0; }
+        .booth-kb .hg-row { margin-bottom: 5px; }
+        .booth-kb .hg-row:last-child { margin-bottom: 0; }
+        .booth-kb .hg-button {
+          height: 46px;
+          border-radius: 7px;
+          border: 1px solid rgba(34, 34, 34, 0.16);
+          background: #ffffff;
+          box-shadow: 0 2px 0 rgba(34, 34, 34, 0.13);
+          color: #1b1a17;
+          font-size: 16px;
+          font-weight: 700;
+        }
+        .booth-kb .hg-button:active { background: #ffe9da; transform: translateY(1px); box-shadow: none; }
+        .booth-kb .hg-button.hg-functionBtn { background: #dcd3c5; font-size: 13px; }
+        .booth-kb .hg-button[data-skbtn="{space}"] { max-width: none; flex-grow: 6; }
+        .booth-kb .hg-button[data-skbtn="{done}"] { background: var(--gc-orange); color: white; flex-grow: 2; }
+        .booth-kb .hg-button[data-skbtn="{shift}"],
+        .booth-kb .hg-button[data-skbtn="{bksp}"] { flex-grow: 1.6; }
         @media (max-height: 820px) {
           .card-setup-frame { font-size: 14px; }
           .card-description { height: 86px; }
+          .booth-kb .hg-button { height: 40px; font-size: 15px; }
+          .booth-kb .hg-row { margin-bottom: 4px; }
         }
       `}</style>
     </form>
