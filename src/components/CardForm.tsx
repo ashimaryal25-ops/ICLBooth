@@ -1,9 +1,10 @@
 "use client";
 
-import { ArrowRight, Keyboard as KeyboardIcon } from "lucide-react";
+import { ArrowRight, Keyboard as KeyboardIcon, Mic, MicOff } from "lucide-react";
 import type { ReactNode } from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import Keyboard from "react-simple-keyboard";
+import { useSpeechToText } from "@/hooks/use-speech-to-text";
 
 const MAX_NAME_LENGTH = 28;
 
@@ -38,6 +39,24 @@ const keyboardDisplay = {
   "{done}": "Done",
 };
 
+function describeVoiceError(code: string): string {
+  switch (code) {
+    case "not-allowed":
+    case "service-not-allowed":
+      return "Microphone access is blocked. Allow it in the browser, then try again.";
+    case "no-speech":
+      return "Nothing was detected. Tap Speak and try again.";
+    case "audio-capture":
+      return "No microphone was found.";
+    case "network":
+      return "Voice input needs an internet connection.";
+    case "unsupported":
+      return "Voice input is unavailable in this browser.";
+    default:
+      return "Voice input stopped. You can continue typing.";
+  }
+}
+
 interface CardFormProps {
   isGenerating: boolean;
   photoReady?: boolean;
@@ -50,6 +69,7 @@ export function CardForm({ isGenerating, photoReady = true, mediaSlot, onSubmit 
   const [selfDescription, setSelfDescription] = useState("");
   const [activeField, setActiveField] = useState<ActiveField>(null);
   const [layoutName, setLayoutName] = useState<"default" | "shift">("default");
+  const speechBaseRef = useRef("");
 
   const canSubmit = useMemo(
     () => photoReady && name.trim().length > 0 && selfDescription.trim().length >= 8,
@@ -95,6 +115,27 @@ export function CardForm({ isGenerating, photoReady = true, mediaSlot, onSubmit 
     [activeField, layoutName],
   );
 
+  const applyLiveTranscript = useCallback((spoken: string) => {
+    const base = speechBaseRef.current.trimEnd();
+    const separator = base ? " " : "";
+    setSelfDescription(`${base}${separator}${spoken}`);
+  }, []);
+
+  const {
+    supported: voiceSupported,
+    listening,
+    error: voiceError,
+    toggle: toggleVoice,
+  } = useSpeechToText({ onTranscript: applyLiveTranscript });
+
+  const handleVoiceToggle = useCallback(() => {
+    if (!listening) {
+      speechBaseRef.current = selfDescription;
+      setActiveField("selfDescription");
+    }
+    toggleVoice();
+  }, [listening, selfDescription, toggleVoice]);
+
   return (
     <form
       className="h-full min-h-0"
@@ -118,7 +159,7 @@ export function CardForm({ isGenerating, photoReady = true, mediaSlot, onSubmit 
             </div>
             <div className="px-3">
               <strong className="block text-sm text-[#1b1a17]">2. Tell us about you</strong>
-              <span className="mt-1 block text-xs leading-4 text-[#6d6255]">A sentence or two is plenty.</span>
+              <span className="mt-1 block text-xs leading-4 text-[#6d6255]">Type or use the microphone.</span>
             </div>
             <div className="pl-3">
               <strong className="block text-sm text-[#1b1a17]">3. Create and print</strong>
@@ -132,9 +173,13 @@ export function CardForm({ isGenerating, photoReady = true, mediaSlot, onSubmit 
             <div>
               <h1 className="text-2xl font-black text-[#1b1a17]">Create your card</h1>
               <p className="mt-1 text-sm font-semibold text-[#6d6255]" aria-live="polite">
-                {!photoReady
-                  ? "Take your photo, then complete both fields."
-                  : "Complete both fields, then create your card."}
+                {voiceError
+                  ? describeVoiceError(voiceError)
+                  : listening
+                    ? "Listening - your words will appear below as you speak."
+                    : !photoReady
+                      ? "Take your photo, then complete both fields."
+                      : "Complete both fields, then create your card."}
               </p>
             </div>
             <span className="shrink-0 border-l border-black/12 pl-4 text-right text-xs font-bold text-[#6d6255]">
@@ -169,19 +214,36 @@ export function CardForm({ isGenerating, photoReady = true, mediaSlot, onSubmit 
 
           <label className="mt-3 grid shrink-0 gap-1 text-xs font-bold text-[#4f463c]" htmlFor="self-description">
             Describe yourself in 1-2 sentences
-            <textarea
-              id="self-description"
-              inputMode="none"
-              value={selfDescription}
-              onFocus={() => focusField("selfDescription")}
-              onChange={(event) => setSelfDescription(event.target.value)}
-              placeholder="What do you enjoy, make, lead, study, or help with?"
-              className={`card-description h-[112px] w-full resize-none rounded-[7px] border bg-white px-3 py-3 text-base font-medium leading-6 text-[#1b1a17] outline-none placeholder:text-[#a49787] ${
-                activeField === "selfDescription"
-                  ? "border-[var(--gc-orange)] ring-2 ring-[var(--gc-orange)]/20"
-                  : "border-black/18"
-              }`}
-            />
+            <div className="relative">
+              <textarea
+                id="self-description"
+                inputMode="none"
+                value={selfDescription}
+                onFocus={() => focusField("selfDescription")}
+                onChange={(event) => setSelfDescription(event.target.value)}
+                placeholder="What do you enjoy, make, lead, study, or help with?"
+                className={`card-description h-[112px] w-full resize-none rounded-[7px] border bg-white px-3 py-3 pr-28 text-base font-medium leading-6 text-[#1b1a17] outline-none placeholder:text-[#a49787] ${
+                  activeField === "selfDescription"
+                    ? "border-[var(--gc-orange)] ring-2 ring-[var(--gc-orange)]/20"
+                    : "border-black/18"
+                }`}
+              />
+              {voiceSupported && (
+                <button
+                  type="button"
+                  onClick={handleVoiceToggle}
+                  aria-pressed={listening}
+                  className={`absolute right-2 top-2 inline-flex h-9 items-center gap-1.5 rounded-[7px] border px-3 text-xs font-bold ${
+                    listening
+                      ? "border-[var(--gc-orange)] bg-[var(--gc-orange)] text-white"
+                      : "border-black/15 bg-[#f3ede3] text-[#1b1a17] hover:bg-[#e9dece]"
+                  }`}
+                >
+                  {listening ? <MicOff size={15} /> : <Mic size={15} />}
+                  {listening ? "Stop" : "Speak"}
+                </button>
+              )}
+            </div>
           </label>
 
           <div className="mt-3 min-h-0 shrink-0 rounded-[8px] border border-black/14 bg-[#e9e1d5] p-2.5">
