@@ -4,16 +4,13 @@ import { ArrowRight, Keyboard as KeyboardIcon, Mic, MicOff } from "lucide-react"
 import type { ReactNode } from "react";
 import { useCallback, useMemo, useRef, useState } from "react";
 import Keyboard from "react-simple-keyboard";
+import type { CardRequest } from "@/lib/card-schema";
+import { gettysburgTheme } from "@/lib/themes";
 import { useSpeechToText } from "@/hooks/use-speech-to-text";
 
 const MAX_NAME_LENGTH = 28;
 
 type ActiveField = "name" | "selfDescription" | null;
-
-export interface CardFormValues {
-  name: string;
-  selfDescription: string;
-}
 
 const keyboardLayout = {
   default: [
@@ -61,7 +58,7 @@ interface CardFormProps {
   isGenerating: boolean;
   photoReady?: boolean;
   mediaSlot?: ReactNode;
-  onSubmit: (values: CardFormValues) => void;
+  onSubmit: (request: CardRequest) => void;
 }
 
 export function CardForm({ isGenerating, photoReady = true, mediaSlot, onSubmit }: CardFormProps) {
@@ -145,6 +142,7 @@ export function CardForm({ isGenerating, photoReady = true, mediaSlot, onSubmit 
         setActiveField(null);
         onSubmit({
           name: name.trim(),
+          theme: gettysburgTheme.id,
           selfDescription: selfDescription.trim(),
         });
       }}

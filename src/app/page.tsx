@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { CardForm, type CardFormValues } from "@/components/CardForm";
+import { CardForm } from "@/components/CardForm";
 import { ImageUpload } from "@/components/ImageUpload";
+import type { CardRequest } from "@/lib/card-schema";
 
 const samplePhoto =
   "data:image/svg+xml;charset=UTF-8," +
@@ -19,9 +20,9 @@ const samplePhoto =
 export default function Home() {
   const [photo, setPhoto] = useState<string | null>(null);
 
-  const handleSubmit = (values: CardFormValues) => {
+  const handleSubmit = (request: CardRequest) => {
     // Card generation lands next; for now just log what the booth collected.
-    console.log("card request", { ...values, hasPhoto: Boolean(photo) });
+    console.log("card request", { ...request, hasPhoto: Boolean(photo) });
   };
 
   return (

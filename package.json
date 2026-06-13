@@ -13,7 +13,8 @@
     "next": "16.2.7",
     "react": "19.2.4",
     "react-dom": "19.2.4",
-    "react-simple-keyboard": "^3.8.240"
+    "react-simple-keyboard": "^3.8.240",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
