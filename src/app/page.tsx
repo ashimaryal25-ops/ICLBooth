@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { CardForm } from "@/components/CardForm";
 import { ImageUpload } from "@/components/ImageUpload";
-import type { CardRequest } from "@/lib/card-schema";
+import type { CardIdentity, CardRequest } from "@/lib/card-schema";
+import { generateCardIdentity } from "@/lib/generate-card-client";
 
 const samplePhoto =
   "data:image/svg+xml;charset=UTF-8," +
@@ -19,17 +20,28 @@ const samplePhoto =
 
 export default function Home() {
   const [photo, setPhoto] = useState<string | null>(null);
+  const [card, setCard] = useState<CardIdentity | null>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = (request: CardRequest) => {
-    // Card generation lands next; for now just log what the booth collected.
-    console.log("card request", { ...request, hasPhoto: Boolean(photo) });
+  const handleSubmit = async (request: CardRequest) => {
+    setIsGenerating(true);
+    setError(null);
+    try {
+      const generated = await generateCardIdentity(request);
+      setCard(generated.card);
+    } catch {
+      setError("Card generation failed. Check the server logs and try again.");
+    } finally {
+      setIsGenerating(false);
+    }
   };
 
   return (
     <main className="min-h-screen px-5 py-4 text-[var(--gc-black)] sm:px-8 lg:h-dvh lg:overflow-hidden">
       <div className="mx-auto h-full max-w-[1440px]">
         <CardForm
-          isGenerating={false}
+          isGenerating={isGenerating}
           photoReady={Boolean(photo)}
           mediaSlot={
             <ImageUpload
@@ -41,6 +53,17 @@ export default function Home() {
           }
           onSubmit={handleSubmit}
         />
+
+        {error && (
+          <p className="mt-3 text-sm font-bold text-[#a30f0f]">{error}</p>
+        )}
+
+        {/* Card renderer is coming; show the generated identity raw for now. */}
+        {card && (
+          <pre className="mt-3 max-h-64 overflow-auto rounded-[8px] border border-black/15 bg-white p-3 text-xs">
+            {JSON.stringify(card, null, 2)}
+          </pre>
+        )}
       </div>
     </main>
   );
