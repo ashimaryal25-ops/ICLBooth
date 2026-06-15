@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { cardTemplateIds } from "@/lib/card-templates";
 import { gettysburgTheme } from "@/lib/themes";
 
 /** Strips a leading "known for" phrase and trailing period from a card description. */
@@ -23,7 +24,7 @@ export const cardSchema = z.object({
     }),
   specialAbility: z.string().min(3).max(34),
   description: z.string().min(12).max(150),
-  colorTheme: z.string().min(2).max(24),
+  colorTheme: z.enum(cardTemplateIds),
 });
 
 export const cardRequestSchema = z.object({

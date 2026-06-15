@@ -22,19 +22,12 @@ export default function Home() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [card, setCard] = useState<CardIdentity | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const handleSubmit = async (request: CardRequest) => {
     setIsGenerating(true);
-    setError(null);
-    try {
-      const generated = await generateCardIdentity(request);
-      setCard(generated.card);
-    } catch {
-      setError("Card generation failed. Check the server logs and try again.");
-    } finally {
-      setIsGenerating(false);
-    }
+    const generated = await generateCardIdentity(request);
+    setCard(generated.card);
+    setIsGenerating(false);
   };
 
   return (
@@ -53,10 +46,6 @@ export default function Home() {
           }
           onSubmit={handleSubmit}
         />
-
-        {error && (
-          <p className="mt-3 text-sm font-bold text-[#a30f0f]">{error}</p>
-        )}
 
         {/* Card renderer is coming; show the generated identity raw for now. */}
         {card && (

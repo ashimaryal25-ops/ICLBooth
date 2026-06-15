@@ -10,11 +10,8 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Invalid card request." }, { status: 400 });
   }
 
-  try {
-    const card = await generateCard(parsed.data);
-    const cardId = crypto.randomUUID();
-    return NextResponse.json({ card, cardId });
-  } catch {
-    return NextResponse.json({ error: "Card generation failed." }, { status: 502 });
-  }
+  const card = await generateCard(parsed.data);
+  const cardId = crypto.randomUUID();
+
+  return NextResponse.json({ card, cardId });
 }

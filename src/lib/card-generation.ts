@@ -1,10 +1,17 @@
 /**
  * Server-side card generation (OpenAI Responses API). Imported only by
  * src/app/api/generate-card/route.ts; the browser reaches this through the
- * client wrapper in src/lib/generate-card-client.ts.
+ * client wrapper in src/lib/generate-card-client.ts. Falls back to a
+ * deterministic local card when no OPENAI_API_KEY is configured.
  */
 import { z } from "zod";
+import {
+  cardTemplateIds,
+  getCardTemplatePromptCatalog,
+  resolveTemplateId,
+} from "@/lib/card-templates";
 import { cardSchema, raritySchema, type CardIdentity, type CardRequest } from "@/lib/card-schema";
+import { createFallbackCard } from "@/lib/fallback-card";
 import { gettysburgTheme } from "@/lib/themes";
 
 const CARD_IDENTITY_JSON_SCHEMA = {
@@ -42,7 +49,7 @@ const CARD_IDENTITY_JSON_SCHEMA = {
     },
     knownFor: { type: "string" },
     specialAbility: { type: "string" },
-    colorTheme: { type: "string" },
+    colorTheme: { type: "string", enum: cardTemplateIds },
   },
 } as const;
 
@@ -56,7 +63,7 @@ const aiCardContentSchema = z.object({
   rarity: raritySchema,
   knownFor: z.string().min(8).max(140),
   specialAbility: z.string().min(3).max(34),
-  colorTheme: z.string().min(2).max(24),
+  colorTheme: z.enum(cardTemplateIds),
 });
 
 function buildSystemPrompt() {
@@ -68,7 +75,8 @@ function buildSystemPrompt() {
     "Avoid insults, sensitive personal attributes, stereotypes, and private information.",
     `Allowed traits: ${gettysburgTheme.traits.join(", ")}.`,
     `Allowed rarities: ${gettysburgTheme.rarities.join(", ")}.`,
-    "colorTheme is a short lowercase keyword for the card's color mood (like 'campus-blue' or 'sunset-orange').",
+    "Choose colorTheme from the allowed card template ids only. The chosen template should match the person's self-description, selected traits, and overall card energy.",
+    "The 'gettysburg-gold' template is the rarest, most powerful card. Only choose it when the card is Legend or Campus Myth and every trait plus Campus Power is roughly 90 or higher (someone maxing out campus contribution). For all other people, choose a casual themed template that fits them, never gettysburg-gold.",
     "Create an original Gettysburg College-themed card title. It may reference campus life, Bullet pride, first-year energy, clubs, making/building, classes, or student leadership, but do not copy a fixed title list.",
     "Pick exactly three traits that best match the user's self-description.",
     "Return traits as an array of exactly three objects with name and score.",
@@ -90,6 +98,7 @@ function buildUserPrompt(input: CardRequest) {
       selfDescription: input.selfDescription,
       theme: input.theme,
     },
+    cardTemplateOptions: getCardTemplatePromptCatalog(),
     outputRules: {
       cardTitle: "Make it punchy, specific, and under 42 characters.",
       traits: "Exactly three objects from the allowed trait list, each with a 60-99 score.",
@@ -97,7 +106,7 @@ function buildUserPrompt(input: CardRequest) {
       rarity: "Use the rarity rubric from the system instructions.",
       knownFor: "One concise phrase based on the self-description, without 'Known for'.",
       specialAbility: "Short ability name, not a sentence.",
-      colorTheme: "Short lowercase color keyword.",
+      colorTheme: "One exact id from cardTemplateOptions.",
     },
   });
 }
@@ -158,7 +167,7 @@ function normalizeGeneratedCard(input: CardRequest, generated: unknown): CardIde
     },
     specialAbility: parsed.specialAbility,
     description: `Known for ${parsed.knownFor.replace(/^known for\s+/i, "").replace(/\.$/, "")}.`,
-    colorTheme: parsed.colorTheme,
+    colorTheme: resolveTemplateId(parsed.rarity, parsed.colorTheme, input.selfDescription),
   });
 }
 
@@ -167,51 +176,55 @@ export async function generateCard(input: CardRequest): Promise<CardIdentity> {
   const apiKey = process.env.OPENAI_API_KEY;
 
   if (!apiKey) {
-    throw new Error("OPENAI_API_KEY is not configured.");
+    return createFallbackCard(input);
   }
 
   const systemPrompt = buildSystemPrompt();
   const userPrompt = buildUserPrompt(input);
 
-  const response = await fetch("https://api.openai.com/v1/responses", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${apiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model,
-      input: [
-        {
-          role: "system",
-          content: systemPrompt,
-        },
-        {
-          role: "user",
-          content: userPrompt,
-        },
-      ],
-      text: {
-        format: {
-          type: "json_schema",
-          name: "card_identity",
-          schema: CARD_IDENTITY_JSON_SCHEMA,
-        },
+  try {
+    const response = await fetch("https://api.openai.com/v1/responses", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
       },
-    }),
-  });
+      body: JSON.stringify({
+        model,
+        input: [
+          {
+            role: "system",
+            content: systemPrompt,
+          },
+          {
+            role: "user",
+            content: userPrompt,
+          },
+        ],
+        text: {
+          format: {
+            type: "json_schema",
+            name: "card_identity",
+            schema: CARD_IDENTITY_JSON_SCHEMA,
+          },
+        },
+      }),
+    });
 
-  if (!response.ok) {
-    throw new Error(`OpenAI request failed with status ${response.status}.`);
+    if (!response.ok) {
+      throw new Error(`OpenAI request failed with status ${response.status}.`);
+    }
+
+    const data: unknown = await response.json();
+    const outputText = extractOutputText(data);
+
+    if (!outputText) {
+      throw new Error("OpenAI response did not include output_text.");
+    }
+
+    const generated: unknown = JSON.parse(outputText);
+    return normalizeGeneratedCard(input, generated);
+  } catch {
+    return createFallbackCard(input);
   }
-
-  const data: unknown = await response.json();
-  const outputText = extractOutputText(data);
-
-  if (!outputText) {
-    throw new Error("OpenAI response did not include output_text.");
-  }
-
-  const generated: unknown = JSON.parse(outputText);
-  return normalizeGeneratedCard(input, generated);
 }
