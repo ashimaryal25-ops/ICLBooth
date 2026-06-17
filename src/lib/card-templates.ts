@@ -2,6 +2,8 @@ export const cardTemplates = [
   {
     id: "athletic-blue",
     name: "Athletic Blue",
+    imagePath: "/cards/athletic-blue.png",
+    textClassName: "gold-card--cool",
     fitSummary:
       "Blue sports pattern with footballs, soccer balls, shuttlecocks, and motion shapes. Best for athletic, energetic, competitive, clutch, team-first, game-day, or high-momentum people.",
     keywords: [
@@ -24,6 +26,8 @@ export const cardTemplates = [
   {
     id: "empathy-pastel",
     name: "Empathy Pastel",
+    imagePath: "/cards/empathy-pastel.png",
+    textClassName: "gold-card--soft",
     fitSummary:
       "Soft pastel rainbow with gentle swirls and a lime frame. Best for empathetic, caring, emotionally aware, supportive, mentor-like, calming, inclusive, or community-minded people.",
     keywords: [
@@ -45,6 +49,8 @@ export const cardTemplates = [
   {
     id: "leadership-red",
     name: "Leadership Red",
+    imagePath: "/cards/leadership-red.png",
+    textClassName: "gold-card--warm",
     fitSummary:
       "Strong red template with target-like ripple circles. Best for leaders, organizers, initiators, strategic decision makers, confident public speakers, and people with high presence.",
     keywords: [
@@ -67,6 +73,8 @@ export const cardTemplates = [
   {
     id: "pride-rainbow",
     name: "Pride Rainbow",
+    imagePath: "/cards/pride-rainbow.png",
+    textClassName: "gold-card--cool",
     fitSummary:
       "Clean vertical rainbow gradient with a metallic silver frame. Best for expressive identity, inclusion, creativity, bold self-expression, connectors, and celebratory all-colors energy.",
     keywords: [
@@ -89,6 +97,8 @@ export const cardTemplates = [
   {
     id: "creative-magenta",
     name: "Creative Magenta",
+    imagePath: "/cards/creative-magenta.png",
+    textClassName: "gold-card--magenta",
     fitSummary:
       "Bold magenta-purple template with repeated upward triangular/starburst forms. Best for expressive creators, artists, performers, stylish personalities, confident presenters, original thinkers, and people with polished creative energy.",
     keywords: [
@@ -116,6 +126,8 @@ export const cardTemplates = [
   {
     id: "gettysburg-gold",
     name: "Gettysburg Gold (Rarest)",
+    imagePath: "/cards/gettysburg-gold-template.png",
+    textClassName: "gold-card--gold",
     fitSummary:
       "The rarest, most powerful card. Reserved ONLY for the strongest students who max out campus contribution (Legend or Campus Myth, Campus Power around 90+). Premium gold finish.",
     keywords: [
@@ -135,6 +147,8 @@ export const cardTemplates = [
   {
     id: "tech-growth-green",
     name: "Tech Growth Green",
+    imagePath: "/cards/tech-growth-green.png",
+    textClassName: "gold-card--green",
     fitSummary:
       "Green gear-and-growth pattern with tech/nature energy. Best for builders, technical creators, inventors, problem solvers, growth-minded learners, engineering, robotics, coding, and practical creativity.",
     keywords: [
@@ -164,6 +178,16 @@ export const cardTemplateIds = cardTemplates.map((template) => template.id) as [
   CardTemplateId,
   ...CardTemplateId[],
 ];
+
+// Default template when the model proposes an unknown id (creative-magenta).
+const DEFAULT_TEMPLATE_ID: CardTemplateId = "creative-magenta";
+
+export function getCardTemplate(templateId: string | undefined) {
+  return (
+    cardTemplates.find((template) => template.id === templateId) ??
+    cardTemplates.find((template) => template.id === DEFAULT_TEMPLATE_ID)!
+  );
+}
 
 export function getCardTemplatePromptCatalog() {
   return cardTemplates.map(({ id, name, fitSummary }) => ({

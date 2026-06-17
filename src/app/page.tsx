@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CardForm } from "@/components/CardForm";
+import { CardPreview } from "@/components/CardPreview";
 import { ImageUpload } from "@/components/ImageUpload";
 import type { CardIdentity, CardRequest } from "@/lib/card-schema";
 import { generateCardIdentity } from "@/lib/generate-card-client";
@@ -47,11 +48,10 @@ export default function Home() {
           onSubmit={handleSubmit}
         />
 
-        {/* Card renderer is coming; show the generated identity raw for now. */}
-        {card && (
-          <pre className="mt-3 max-h-64 overflow-auto rounded-[8px] border border-black/15 bg-white p-3 text-xs">
-            {JSON.stringify(card, null, 2)}
-          </pre>
+        {card && photo && (
+          <div className="mt-4 flex justify-center">
+            <CardPreview card={card} photo={photo} />
+          </div>
         )}
       </div>
     </main>

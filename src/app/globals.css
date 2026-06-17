@@ -57,3 +57,329 @@ select:focus-visible {
   background: var(--gc-orange);
   color: white;
 }
+
+.gold-card {
+  position: relative;
+  /* 320x480 is an exact 2:3 canvas, matching a physical 4x6 print. */
+  width: 320px;
+  height: 480px;
+  overflow: hidden;
+  /* Templates are squared full-bleed rectangles, so the card is a clean
+     rectangle to match a physical print (no corner rounding). */
+  border-radius: 0;
+  color: #3d2300;
+  font-family: Georgia, "Times New Roman", serif;
+  isolation: isolate;
+  /* Themed chrome, tinted from each card's own ink color. The gold (rarest)
+     card overrides these because its boxes are baked into the template art. */
+  --card-bar: #ffffff;
+  --card-glass: color-mix(in srgb, currentColor 12%, transparent);
+  --card-glass-soft: color-mix(in srgb, currentColor 7%, transparent);
+  --card-glass-edge: color-mix(in srgb, currentColor 22%, transparent);
+  --card-seal-ring: color-mix(in srgb, currentColor 50%, transparent);
+  /* Calms the busy template pattern behind the lower text block so small
+     labels stay readable. Top (photo) stays clear; gold opts out. */
+  --card-veil: linear-gradient(
+    180deg,
+    transparent 0 54%,
+    color-mix(in srgb, #ffffff 12%, transparent) 66%,
+    color-mix(in srgb, #ffffff 16%, transparent) 100%
+  );
+}
+
+.gold-card--cool {
+  color: #061b35;
+}
+
+.gold-card--warm {
+  color: #2c0505;
+}
+
+.gold-card--soft {
+  color: #233034;
+}
+
+.gold-card--gold {
+  color: #3d2300;
+  /* Rarest card: golden bars, and chrome comes from the template art, so the
+     CSS overlay boxes are switched off here. */
+  --card-bar: linear-gradient(90deg, #ffe7a3 0%, #d8a52a 100%);
+  --card-glass: transparent;
+  --card-glass-soft: transparent;
+  --card-glass-edge: transparent;
+  --card-seal-ring: transparent;
+  --card-veil: transparent;
+}
+
+.gold-card--green {
+  color: #06250f;
+}
+
+.gold-card--magenta {
+  color: #2d0016;
+}
+
+.gold-card__background {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  width: 100%;
+  height: 100%;
+}
+
+.gold-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background: var(--card-veil);
+  pointer-events: none;
+}
+
+.gold-card__header {
+  position: absolute;
+  inset: 20px 28px auto;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  z-index: 3;
+  border-radius: 9px;
+  background: transparent;
+  box-shadow: none;
+}
+
+.gold-card__seal {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  font-size: 17px;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 1px 0 rgba(255, 244, 178, 0.8);
+  border-radius: 999px;
+  background: var(--card-glass);
+  box-shadow: inset 0 0 0 1.5px var(--card-seal-ring);
+}
+
+.gold-card__year {
+  margin-left: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.gold-card__rarity {
+  position: absolute;
+  top: 6px;
+  right: 1px;
+  width: 67px;
+  height: 23px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 3px 4px 0;
+  border: 0;
+  border-radius: 6px;
+  background: var(--card-glass);
+  box-shadow: inset 0 0 0 1px var(--card-glass-edge);
+  color: currentColor;
+  font-family: var(--font-sans);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.gold-card__portrait {
+  position: absolute;
+  top: 57px;
+  left: 23px;
+  width: 274px;
+  height: 205px;
+  overflow: hidden;
+  border-radius: 8px;
+  border: 1px solid color-mix(in srgb, currentColor 45%, transparent);
+  box-shadow: 0 2px 12px rgba(255, 255, 255, 0.32);
+}
+
+.gold-card__identity {
+  position: absolute;
+  top: 278px;
+  left: 24px;
+  width: 272px;
+  height: 33px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+}
+
+.gold-card__identity h2 {
+  max-width: 100%;
+  overflow: hidden;
+  margin: 0;
+  font-size: 16px;
+  font-weight: 900;
+  line-height: 17px;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.gold-card__identity p {
+  max-width: 100%;
+  overflow: hidden;
+  margin: 0;
+  color: color-mix(in srgb, currentColor 82%, transparent);
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 11px;
+  letter-spacing: 0.06em;
+  text-align: left;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.gold-card__traits {
+  position: absolute;
+  top: 314px;
+  left: 24px;
+  width: 272px;
+  display: grid;
+  gap: 4px;
+}
+
+.gold-card__trait {
+  display: grid;
+  grid-template-columns: 92px 1fr 20px;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  height: 13px;
+}
+
+.gold-card__trait > span {
+  overflow: hidden;
+  font-size: 8px;
+  font-weight: 900;
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.gold-card__trait-track {
+  height: 4px;
+  overflow: hidden;
+  background: color-mix(in srgb, currentColor 32%, transparent);
+  transform: translateY(-1px);
+}
+
+.gold-card__trait-track > div {
+  height: 100%;
+  background: var(--card-bar);
+  transition: width 180ms ease;
+}
+
+.gold-card__trait strong {
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+  text-align: right;
+}
+
+.gold-card__power {
+  position: absolute;
+  top: 364px;
+  left: 23px;
+  width: 274px;
+  height: 31px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 9px;
+  border-radius: 7px;
+  background: var(--card-glass);
+  box-shadow: inset 0 0 0 1px var(--card-glass-edge);
+}
+
+.gold-card__power span,
+.gold-card__known > span,
+.gold-card__ability > span {
+  font-size: 8px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gold-card__power strong {
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.gold-card__known {
+  position: absolute;
+  top: 402px;
+  left: 24px;
+  width: 224px;
+  height: 33px;
+  overflow: hidden;
+}
+
+.gold-card__known p {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 3px 0 0;
+  font-size: 9.5px;
+  font-weight: 700;
+  line-height: 11px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.gold-card__ability {
+  position: absolute;
+  top: 437px;
+  left: 24px;
+  width: 224px;
+  height: 31px;
+  overflow: hidden;
+}
+
+.gold-card__ability strong {
+  display: block;
+  overflow: hidden;
+  margin-top: 2px;
+  font-size: 12px;
+  font-weight: 900;
+  line-height: 12px;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.gold-card__qr {
+  position: absolute;
+  right: 22px;
+  bottom: 22px;
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  padding: 2px;
+  border: 0;
+  border-radius: 4px;
+  background: white;
+}
+
+.gold-card__qr img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
