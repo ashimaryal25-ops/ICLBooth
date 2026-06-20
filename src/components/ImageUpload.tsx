@@ -8,10 +8,11 @@ interface ImageUploadProps {
   photo: string | null;
   onUpload: (photo: string) => void;
   onChooseAnother: () => void;
+  onViewSample: () => void;
   samplePhoto: string;
 }
 
-export function ImageUpload({ photo, onUpload, onChooseAnother, samplePhoto }: ImageUploadProps) {
+export function ImageUpload({ photo, onUpload, onChooseAnother, onViewSample, samplePhoto }: ImageUploadProps) {
   const [countdown, setCountdown] = useState<number | null>(null);
 
   const startCamera = useCallback(() => {
@@ -107,13 +108,23 @@ export function ImageUpload({ photo, onUpload, onChooseAnother, samplePhoto }: I
         {countdown !== null ? "Ready..." : "Take Picture"}
       </button>
 
-      <button
-        type="button"
-        onClick={() => onUpload(samplePhoto)}
-        className="flex h-12 items-center justify-center gap-2 rounded-full bg-white/75 text-base font-semibold text-[#1b1a17] shadow-[0_3px_12px_rgba(112,54,0,0.14)] transition hover:bg-white"
-      >
-        Use sample
-      </button>
+      <div className="grid grid-cols-2 gap-2.5">
+        <button
+          type="button"
+          onClick={() => onUpload(samplePhoto)}
+          className="flex h-12 items-center justify-center gap-2 rounded-full bg-white/75 text-base font-semibold text-[#1b1a17] shadow-[0_3px_12px_rgba(112,54,0,0.14)] transition hover:bg-white"
+        >
+          Use sample
+        </button>
+
+        <button
+          type="button"
+          onClick={onViewSample}
+          className="flex h-12 items-center justify-center gap-2 rounded-full bg-white/75 text-base font-semibold text-[#1b1a17] shadow-[0_3px_12px_rgba(112,54,0,0.14)] transition hover:bg-white"
+        >
+          See sample card
+        </button>
+      </div>
     </section>
   );
 }
