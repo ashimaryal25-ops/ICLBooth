@@ -5,11 +5,12 @@ import { CardForm } from "@/components/CardForm";
 import { CardPreview } from "@/components/CardPreview";
 import { CardReveal } from "@/components/CardReveal";
 import { ImageUpload } from "@/components/ImageUpload";
+import { PhotoCollage } from "@/components/PhotoCollage";
 import type { CardIdentity, CardRequest } from "@/lib/card-schema";
 import { createFallbackCard } from "@/lib/fallback-card";
 import { generateCardIdentity } from "@/lib/generate-card-client";
 
-type Step = "cardSetup" | "generating" | "reveal";
+type Step = "choose" | "cardSetup" | "generating" | "reveal" | "collage";
 
 const sampleCard = createFallbackCard({
   name: "Your Name",
@@ -30,13 +31,20 @@ const samplePhoto =
   </svg>`);
 
 export function BoothApp() {
-  const [step, setStep] = useState<Step>("cardSetup");
+  const [step, setStep] = useState<Step>("choose");
   const [photo, setPhoto] = useState<string | null>(null);
   const [card, setCard] = useState<CardIdentity | null>(null);
   const [isSampleCardOpen, setIsSampleCardOpen] = useState(false);
 
   const resetCardFlow = useCallback(() => {
     setStep("cardSetup");
+    setPhoto(null);
+    setCard(null);
+    setIsSampleCardOpen(false);
+  }, []);
+
+  const resetToChooser = useCallback(() => {
+    setStep("choose");
     setPhoto(null);
     setCard(null);
     setIsSampleCardOpen(false);
@@ -66,23 +74,87 @@ export function BoothApp() {
   );
 
   return (
-    <main className="min-h-screen overflow-y-auto px-5 py-4 text-[var(--gc-black)] sm:px-8 lg:h-dvh lg:overflow-hidden">
-      <div className="relative z-10 mx-auto h-full max-w-[1440px]">
+    <main
+      className={
+        step === "choose" || step === "collage"
+          ? "relative h-dvh w-full overflow-hidden text-[var(--gc-black)]"
+          : "min-h-screen overflow-y-auto px-5 py-4 text-[var(--gc-black)] sm:px-8 lg:h-dvh lg:overflow-hidden"
+      }
+    >
+      <div
+        className={
+          step === "choose" || step === "collage"
+            ? "relative z-10 h-full w-full"
+            : "relative z-10 mx-auto h-full max-w-[1440px]"
+        }
+      >
+        {step === "choose" && (
+          <section className="choice-stage grid h-full w-full grid-cols-1 sm:grid-cols-2">
+            <button
+              type="button"
+              onClick={() => setStep("cardSetup")}
+              className="group grid place-items-center p-10 text-center transition-all hover:brightness-110 active:brightness-95"
+            >
+              <span className="max-w-xs">
+                <span className="block text-sm font-black uppercase tracking-[0.2em] text-white/80">
+                  Gettysburg College
+                </span>
+                <span className="mt-2 block text-4xl font-black text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.3)]">
+                  Trading Card
+                </span>
+                <span className="mt-3 block text-base font-semibold leading-6 text-white/90">
+                  Snap a portrait and turn it into a collectible card.
+                </span>
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setStep("collage")}
+              className="group grid place-items-center p-10 text-center transition-all hover:brightness-110 active:brightness-95"
+            >
+              <span className="max-w-xs">
+                <span className="block text-sm font-black uppercase tracking-[0.2em] text-white/80">
+                  Keepsake
+                </span>
+                <span className="mt-2 block text-4xl font-black text-white [text-shadow:0_2px_8px_rgba(0,0,0,0.3)]">
+                  Photo Strip
+                </span>
+                <span className="mt-3 block text-base font-semibold leading-6 text-white/90">
+                  Build a classic photo booth strip to take home.
+                </span>
+              </span>
+            </button>
+          </section>
+        )}
+
+        {step === "collage" && <PhotoCollage onExit={resetToChooser} />}
+
         {step === "cardSetup" && (
-          <CardForm
-            isGenerating={false}
-            photoReady={Boolean(photo)}
-            mediaSlot={
-              <ImageUpload
-                photo={photo}
-                onUpload={setPhoto}
-                onChooseAnother={() => setPhoto(null)}
-                onViewSample={() => setIsSampleCardOpen(true)}
-                samplePhoto={samplePhoto}
-              />
-            }
-            onSubmit={handleGenerate}
-          />
+          <section className="grid h-full min-h-0 grid-rows-[auto_minmax(0,1fr)] gap-2.5">
+            <button
+              type="button"
+              onClick={resetToChooser}
+              className="w-fit rounded-[30px] border border-black/25 bg-white/30 px-5 py-2 text-sm font-bold text-[#222] backdrop-blur-[4px] transition-all hover:bg-white/50 active:scale-95"
+            >
+              ← Back
+            </button>
+
+            <CardForm
+              isGenerating={false}
+              photoReady={Boolean(photo)}
+              mediaSlot={
+                <ImageUpload
+                  photo={photo}
+                  onUpload={setPhoto}
+                  onChooseAnother={() => setPhoto(null)}
+                  onViewSample={() => setIsSampleCardOpen(true)}
+                  samplePhoto={samplePhoto}
+                />
+              }
+              onSubmit={handleGenerate}
+            />
+          </section>
         )}
 
         {isSampleCardOpen && (
@@ -136,7 +208,7 @@ export function BoothApp() {
             card={card}
             photo={photo}
             onRestart={resetCardFlow}
-            onGoHome={resetCardFlow}
+            onGoHome={resetToChooser}
           />
         )}
       </div>

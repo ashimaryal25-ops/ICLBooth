@@ -38,6 +38,24 @@ body {
   color: var(--foreground);
 }
 
+.choice-stage {
+  background-color: var(--gc-sand);
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.11) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.11) 1px, transparent 1px),
+    linear-gradient(90deg, #24486d 0 50%, #b86635 50% 100%);
+  background-size: 34px 34px, 34px 34px, auto;
+}
+
+@media (max-width: 640px) {
+  .choice-stage {
+    background-image:
+      linear-gradient(rgba(255, 255, 255, 0.11) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.11) 1px, transparent 1px),
+      linear-gradient(180deg, #24486d 0 50%, #b86635 50% 100%);
+  }
+}
+
 button,
 input,
 textarea,
