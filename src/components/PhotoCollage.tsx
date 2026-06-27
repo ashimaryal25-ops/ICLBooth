@@ -2,20 +2,15 @@
 
 /**
  * PhotoCollage — React port of Chloe's original GBOOTH photo-strip booth,
- * rendered in-app instead of as a standalone page.
+ * rendered in-app.
  *
- * Keeps the original four screens (pick a layout, shoot, decorate, finish) and
- * the same strip proportions; the vanilla DOM/canvas code becomes React state
- * plus one offscreen canvas that renders the strip.
+ * Owns the view state, capture session and canvas compositing. The four screens
+ * live in ./photo-collage, helpers in lib/photo-collage.
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
-  ACCENT,
   DEFAULT_STRIP_COLOR,
-  FILTERS,
-  LAYOUT_OPTIONS,
-  PRESET_COLORS,
   SKY,
   STRIP_GAP,
   STRIP_H,
@@ -23,13 +18,14 @@ import {
   STRIP_PHOTO_W,
   STRIP_TOP_MARGIN,
   STRIP_W,
-  backBtn,
-  glassBtn,
-  heading,
 } from "@/lib/photo-collage/constants";
 import { canvasFilter, slotPhotoHeight, sleep } from "@/lib/photo-collage/canvas";
 import type { CollageView, FilterName, PhotoCollageProps } from "@/lib/photo-collage/types";
 import { captureDevPhoto, startDevCamera, stopDevCamera } from "@/lib/dev-camera";
+import { CameraView } from "@/components/photo-collage/CameraView";
+import { DecorView } from "@/components/photo-collage/DecorView";
+import { FinalView } from "@/components/photo-collage/FinalView";
+import { LayoutView } from "@/components/photo-collage/LayoutView";
 
 export function PhotoCollage({ onExit }: PhotoCollageProps) {
   const [view, setView] = useState<CollageView>("layout");
@@ -215,215 +211,51 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
 
       {/* ================= LAYOUT PICKER ================= */}
       {view === "layout" && (
-        <section className="grid h-full w-full place-items-center p-8">
-          <button type="button" onClick={onExit} className={backBtn}>
-            ← Back
-          </button>
-          <div className="w-full max-w-3xl text-center">
-            <h1 className="font-['Arial_Black',Arial,sans-serif] text-[42px] font-black uppercase tracking-[2px] text-white [text-shadow:0_3px_8px_rgba(0,0,0,0.25)]">
-              Photo Strip
-            </h1>
-            <p className="mt-2 text-lg font-bold text-white/90">
-              How many shots do you want?
-            </p>
-            <div className="mt-8 grid grid-cols-3 gap-5">
-              {LAYOUT_OPTIONS.map((option) => (
-                <button
-                  key={option.slots}
-                  type="button"
-                  onClick={() => startSession(option.slots)}
-                  className="flex flex-col items-center gap-2 rounded-[18px] border-2 border-white/70 bg-white/20 px-4 py-8 text-white transition-all hover:bg-white/35 active:scale-95"
-                >
-                  <span className="font-['Arial_Black',Arial,sans-serif] text-2xl font-black">
-                    {option.label}
-                  </span>
-                  <span className="text-sm font-bold text-white/85">{option.sub}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </section>
+        <LayoutView onExit={onExit} onPick={startSession} />
       )}
 
       {/* ================= CAMERA ================= */}
       {view === "camera" && (
-        <section className="grid h-full w-full place-items-center p-8">
-          <button
-            type="button"
-            onClick={() => {
-              stopDevCamera();
-              setView("layout");
-            }}
-            className={backBtn}
-          >
-            ← Back
-          </button>
-
-          <div className="w-full max-w-2xl text-center">
-            <h2 className={heading}>
-              {sessionDone ? "All shots taken" : `Shot ${previews.length + 1} of ${slots}`}
-            </h2>
-
-            <div className="relative mx-auto grid aspect-[4/3] w-full max-w-xl place-items-center overflow-hidden rounded-[16px] border-4 border-white/70 bg-black/25">
-              {countdown !== null && (
-                <span className="gbooth-countdown font-['Arial_Black',Arial,sans-serif] text-[120px] font-black text-white [text-shadow:0_4px_12px_rgba(0,0,0,0.4)]">
-                  {countdown}
-                </span>
-              )}
-              {countdown === null && !sessionDone && (
-                <span className="text-xl font-black uppercase tracking-[1px] text-white">
-                  Hold still…
-                </span>
-              )}
-              {sessionDone && (
-                <span className="text-xl font-black uppercase tracking-[1px] text-white">
-                  Nice one!
-                </span>
-              )}
-            </div>
-
-            <div className="mt-4 flex justify-center gap-3">
-              {previews.map((preview, index) => (
-                <img
-                  key={index}
-                  src={preview}
-                  alt={`Shot ${index + 1}`}
-                  className="h-20 w-[106px] rounded-[8px] border-2 border-white/70 object-cover"
-                />
-              ))}
-            </div>
-
-            {cameraError && (
-              <p className="mt-4 rounded-[10px] bg-black/50 px-4 py-2 text-sm font-bold text-[#ffb4b4]">
-                {cameraError}
-              </p>
-            )}
-
-            {sessionDone && (
-              <div className="mt-6 flex justify-center gap-3">
-                <button type="button" onClick={retakeAll} className={glassBtn}>
-                  Retake all
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setView("decor")}
-                  className="rounded-[20px] border-2 border-white bg-white px-6 py-2.5 text-[12px] font-black uppercase tracking-[0.5px] transition-all active:scale-95"
-                  style={{ color: ACCENT }}
-                >
-                  Continue
-                </button>
-              </div>
-            )}
-          </div>
-        </section>
+        <CameraView
+          slots={slots}
+          previews={previews}
+          countdown={countdown}
+          cameraError={cameraError}
+          sessionDone={sessionDone}
+          onBack={() => {
+            stopDevCamera();
+            setView("layout");
+          }}
+          onRetakeAll={retakeAll}
+          onContinue={() => setView("decor")}
+        />
       )}
 
       {/* ================= DECORATE ================= */}
       {view === "decor" && (
-        <section className="grid h-full w-full grid-cols-[minmax(0,1fr)_320px] gap-6 p-8">
-          <button
-            type="button"
-            onClick={() => {
-              resetShots();
-              setView("camera");
-            }}
-            className={backBtn}
-          >
-            ← Back
-          </button>
-
-          <div className="grid min-h-0 place-items-center pt-12">
-            <canvas
-              ref={decorCanvasRef}
-              className="max-h-full w-auto rounded-[10px] shadow-[0_8px_28px_rgba(0,0,0,0.25)]"
-              style={{ aspectRatio: `${STRIP_W} / ${STRIP_H}` }}
-            />
-          </div>
-
-          <div className="flex flex-col gap-6 overflow-y-auto pt-12">
-            <div>
-              <h3 className={heading}>Strip colour</h3>
-              <div className="flex flex-wrap gap-2.5">
-                {PRESET_COLORS.map((color) => (
-                  <button
-                    key={color}
-                    type="button"
-                    onClick={() => setBgColor(color)}
-                    aria-label={`Strip colour ${color}`}
-                    className={`h-11 w-11 rounded-full border-[3px] transition-transform active:scale-95 ${
-                      bgColor === color ? "border-white" : "border-white/40"
-                    }`}
-                    style={{ backgroundColor: color }}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div>
-              <h3 className={heading}>Filter</h3>
-              <div className="grid grid-cols-2 gap-2">
-                {FILTERS.map((option) => (
-                  <button
-                    key={option.key}
-                    type="button"
-                    onClick={() => setFilter(option.key)}
-                    className={`${glassBtn} ${filter === option.key ? "bg-white/45" : ""}`}
-                  >
-                    {option.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <button
-              type="button"
-              onClick={goFinal}
-              className="mt-auto rounded-[20px] border-2 border-white bg-white px-6 py-3.5 text-[13px] font-black uppercase tracking-[0.5px] transition-all active:scale-95"
-              style={{ color: ACCENT }}
-            >
-              Finish strip
-            </button>
-          </div>
-        </section>
+        <DecorView
+          bgColor={bgColor}
+          setBgColor={setBgColor}
+          filter={filter}
+          setFilter={setFilter}
+          decorCanvasRef={decorCanvasRef}
+          onBack={() => {
+            resetShots();
+            setView("camera");
+          }}
+          onContinue={goFinal}
+        />
       )}
 
       {/* ================= FINAL ================= */}
       {view === "final" && (
-        <section className="grid h-full w-full place-items-center p-8">
-          <div className="flex items-center gap-14">
-            {stripDataUrl && (
-              <img
-                src={stripDataUrl}
-                alt="Your finished photo strip"
-                className="max-h-[80vh] w-auto rounded-[10px] shadow-[0_8px_28px_rgba(0,0,0,0.25)]"
-              />
-            )}
-
-            <div className="flex flex-col items-center gap-6">
-              <h2 className="font-['Arial_Black',Arial,sans-serif] text-3xl font-black uppercase text-white [text-shadow:0_2px_6px_rgba(0,0,0,0.25)]">
-                All done
-              </h2>
-              <a
-                href={stripDataUrl}
-                download="gettysburg-photo-strip.png"
-                className="rounded-[20px] border-2 border-white bg-white px-8 py-3.5 text-[13px] font-black uppercase tracking-[0.5px] transition-all active:scale-95"
-                style={{ color: ACCENT }}
-              >
-                Save strip
-              </a>
-              <button
-                type="button"
-                onClick={() => {
-                  stopDevCamera();
-                  onExit();
-                }}
-                className={glassBtn}
-              >
-                Home
-              </button>
-            </div>
-          </div>
-        </section>
+        <FinalView
+          stripDataUrl={stripDataUrl}
+          onHome={() => {
+            stopDevCamera();
+            onExit();
+          }}
+        />
       )}
     </div>
   );
