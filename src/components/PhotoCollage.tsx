@@ -10,6 +10,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
+  CROP_ZOOM,
   DEFAULT_STRIP_COLOR,
   SKY,
   STRIP_GAP,
@@ -18,6 +19,7 @@ import {
   STRIP_PHOTO_W,
   STRIP_TOP_MARGIN,
   STRIP_W,
+  VERTICAL_CROP_BIAS,
 } from "@/lib/photo-collage/constants";
 import { canvasFilter, slotPhotoHeight, sleep } from "@/lib/photo-collage/canvas";
 import type { CollageView, FilterName, PhotoCollageProps } from "@/lib/photo-collage/types";
@@ -114,6 +116,10 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
           c.height = 480;
           const cx = c.getContext("2d");
           if (cx) {
+            // The camera hands back a mirrored (selfie) view; flip it back so
+            // the stored shot is true-to-life and the strip does the mirroring.
+            cx.translate(640, 0);
+            cx.scale(-1, 1);
             cx.drawImage(image, 0, 0, 640, 480);
             photosRef.current.push(c);
             setPreviews((p) => [...p, c.toDataURL("image/png")]);
@@ -153,7 +159,9 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
       const y = STRIP_TOP_MARGIN + i * (photoH + STRIP_GAP);
       const src = photos[i];
 
-      // Cover-crop into the slot so the photo fills it without stretching.
+      // Cover-crop into the slot (no stretch), zoomed slightly (CROP_ZOOM) and
+      // biased downward (VERTICAL_CROP_BIAS) to trim the empty ceiling the low
+      // booth camera captures while keeping the face and torso.
       const targetAspect = photoW / photoH;
       let sw = src.width;
       let sh = src.width / targetAspect;
@@ -161,8 +169,10 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
         sh = src.height;
         sw = src.height * targetAspect;
       }
+      sw /= CROP_ZOOM;
+      sh /= CROP_ZOOM;
       const sx = (src.width - sw) / 2;
-      const sy = (src.height - sh) / 2;
+      const sy = (src.height - sh) * VERTICAL_CROP_BIAS;
 
       ctx.save();
       // Clip so filters never bleed past the photo frame.
@@ -170,7 +180,10 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
       ctx.rect(STRIP_PADDING_X, y, photoW, photoH);
       ctx.clip();
       ctx.filter = canvasFilter(filter);
-      ctx.drawImage(src, sx, sy, sw, sh, STRIP_PADDING_X, y, photoW, photoH);
+      // Mirror, like a real booth.
+      ctx.translate(STRIP_PADDING_X + photoW, y);
+      ctx.scale(-1, 1);
+      ctx.drawImage(src, sx, sy, sw, sh, 0, 0, photoW, photoH);
       ctx.restore();
     }
 

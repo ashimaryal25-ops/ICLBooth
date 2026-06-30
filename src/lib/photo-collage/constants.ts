@@ -9,6 +9,11 @@ export const STRIP_W = 600;
 export const STRIP_H = 1800;
 export const STRIP_PADDING_X = 24;
 
+// Reframing for the low-mounted booth camera, which captures a lot of empty
+// ceiling above the guest. Tune these two if the framing needs adjusting:
+export const CROP_ZOOM = 1.2; // >1 zooms in to push the ceiling out of frame
+export const VERTICAL_CROP_BIAS = 0.72; // 0 keeps the top of the frame, 1 keeps the bottom
+
 // Shared layout band so 2/3/4-shot strips are laid out identically: photos
 // always fill the same region (top margin → footer) with equal gaps, and the
 // footer sits in a fixed reserved band at the bottom. No per-layout tuning.
@@ -17,6 +22,8 @@ export const STRIP_GAP = 20;
 export const STRIP_FOOTER_H = 250; // reserved bottom band for college text + logo
 
 // Photo width is constant; height follows from how many photos share the band.
+// The strip renderer AND the camera preview both use this, so the shape a guest
+// frames on the capture screen is exactly the shape that lands on the strip.
 export const STRIP_PHOTO_W = STRIP_W - STRIP_PADDING_X * 2;
 
 // Palette.

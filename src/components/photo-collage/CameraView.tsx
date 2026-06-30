@@ -1,6 +1,6 @@
 "use client";
 
-import { ACCENT, STRIP_PHOTO_W, backBtn, glassBtn } from "@/lib/photo-collage/constants";
+import { ACCENT, STRIP_PHOTO_W, VERTICAL_CROP_BIAS, backBtn, glassBtn } from "@/lib/photo-collage/constants";
 import { slotPhotoHeight } from "@/lib/photo-collage/canvas";
 
 type CameraViewProps = {
@@ -16,7 +16,7 @@ type CameraViewProps = {
   onContinue: () => void;
 };
 
-/** The capture view: viewfinder + per-slot thumbnails + Retake/Continue. */
+/** The capture view: mirror viewfinder + per-slot thumbnails + Retake/Continue. */
 export function CameraView({
   slots,
   previews,
@@ -59,7 +59,7 @@ export function CameraView({
             <img
               src={previews[previews.length - 1]}
               alt="Latest captured photo"
-              className="h-full w-full object-cover"
+              className="h-full w-full -scale-x-100 object-cover"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center px-10 text-center text-2xl font-black text-white">
@@ -104,7 +104,8 @@ export function CameraView({
                   <img
                     src={previews[i]}
                     alt={`Shot ${i + 1}`}
-                    className="h-[90%] w-[90%] object-cover"
+                    className="h-[90%] w-[90%] -scale-x-100 object-cover"
+                    style={{ objectPosition: `center ${VERTICAL_CROP_BIAS * 100}%` }}
                   />
                 ) : (
                   <span className="text-3xl font-black text-[#cbd5e1]">{i + 1}</span>
