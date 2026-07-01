@@ -5,12 +5,14 @@ import { ACCENT } from "@/lib/photo-collage/constants";
 
 type FinalViewProps = {
   stripDataUrl: string;
+  /** Two-up 4×6 sheet: one print, two strips. Falls back to the bare strip. */
+  printSheetUrl: string;
   /** Return to the app's home. */
   onHome: () => void;
 };
 
 /** The final view: the finished strip and a way to take it home. */
-export function FinalView({ stripDataUrl, onHome }: FinalViewProps) {
+export function FinalView({ stripDataUrl, printSheetUrl, onHome }: FinalViewProps) {
   return (
     <section className="relative flex h-full w-full flex-col items-center">
       <h2 className="mt-4 text-[38px] font-black uppercase tracking-[2px] text-white [text-shadow:0_4px_10px_rgba(0,0,0,0.25)]">
@@ -45,7 +47,7 @@ export function FinalView({ stripDataUrl, onHome }: FinalViewProps) {
         {/* RIGHT: save (floated so the strip stays centered) */}
         <div className="absolute right-[8vw] top-1/2 flex -translate-y-1/2 flex-col items-center justify-center gap-8">
           <a
-            href={stripDataUrl || undefined}
+            href={printSheetUrl || stripDataUrl || undefined}
             download="gettysburg-photo-strip.png"
             className="flex h-[140px] w-[140px] flex-col items-center justify-center gap-1.5 rounded-full border-4 border-white text-[15px] font-black uppercase tracking-[1px] text-white shadow-[0_10px_24px_rgba(0,0,0,0.25)] transition-transform hover:scale-105 active:scale-95"
             style={{ background: ACCENT }}

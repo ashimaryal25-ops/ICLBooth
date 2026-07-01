@@ -9,6 +9,7 @@
  */
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import QRCode from "qrcode";
 import {
   CROP_ZOOM,
   DEFAULT_STRIP_COLOR,
@@ -21,7 +22,7 @@ import {
   STRIP_W,
   VERTICAL_CROP_BIAS,
 } from "@/lib/photo-collage/constants";
-import { canvasFilter, slotPhotoHeight, sleep } from "@/lib/photo-collage/canvas";
+import { canvasFilter, composePlainPrintSheet, slotPhotoHeight, sleep } from "@/lib/photo-collage/canvas";
 import type { CollageView, FilterName, PhotoCollageProps } from "@/lib/photo-collage/types";
 import { captureDevPhoto, startDevCamera, stopDevCamera } from "@/lib/dev-camera";
 import { CameraView } from "@/components/photo-collage/CameraView";
@@ -42,11 +43,42 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
   const [cameraError, setCameraError] = useState<string | null>(null);
 
   const [stripDataUrl, setStripDataUrl] = useState("");
+  const [printSheetUrl, setPrintSheetUrl] = useState("");
+  const [brandReady, setBrandReady] = useState(false);
+  const [stripQrReady, setStripQrReady] = useState(false);
 
   const photosRef = useRef<HTMLCanvasElement[]>([]);
   // Bumped per capture run; a stale/overlapping loop checks this and bails.
   const captureRunRef = useRef(0);
   const decorCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const brandImgRef = useRef<HTMLImageElement | null>(null);
+  const stripQrImgRef = useRef<HTMLImageElement | null>(null);
+
+  // The ICL mark is local, so drawing it cannot taint the printable canvas.
+  useEffect(() => {
+    const img = new Image();
+    img.onload = () => {
+      brandImgRef.current = img;
+      setBrandReady(true);
+    };
+    img.src = "/cardify/icl-logo.png";
+
+    // Static QR code pointing to the ICL website
+    QRCode.toDataURL("https://icl.sites.gettysburg.edu/", {
+      margin: 1,
+      width: 150,
+      color: { dark: "#000000", light: "#ffffff" },
+    })
+      .then((url) => {
+        const qrImg = new Image();
+        qrImg.onload = () => {
+          stripQrImgRef.current = qrImg;
+          setStripQrReady(true);
+        };
+        qrImg.src = url;
+      })
+      .catch(() => {});
+  }, []);
 
   const resetShots = useCallback(() => {
     photosRef.current = [];
@@ -191,21 +223,44 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
     ctx.fillStyle = "#ffffff";
     ctx.font = "900 30px sans-serif";
     ctx.textAlign = "center";
+    (ctx as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = "2px";
     ctx.fillText("GETTYSBURG COLLEGE", STRIP_W / 2, STRIP_H - 206);
-  }, [bgColor, filter]);
+    (ctx as CanvasRenderingContext2D & { letterSpacing?: string }).letterSpacing = "0px";
+
+    const brandImg = brandReady ? brandImgRef.current : null;
+    if (brandImg) {
+      const brandSize = 116;
+      const brandX = STRIP_W - STRIP_PADDING_X - brandSize;
+      const brandY = STRIP_H - 154;
+      ctx.drawImage(brandImg, brandX, brandY, brandSize, brandSize);
+    }
+
+    const stripQrImg = stripQrReady ? stripQrImgRef.current : null;
+    if (stripQrImg) {
+      const qrSize = 116;
+      const qrX = STRIP_PADDING_X;
+      const qrY = STRIP_H - 154;
+      ctx.drawImage(stripQrImg, qrX, qrY, qrSize, qrSize);
+    }
+  }, [bgColor, filter, brandReady, stripQrReady]);
 
   useEffect(() => {
     if (view !== "decor") return;
     renderStrip();
   }, [view, renderStrip]);
 
-  const goFinal = () => {
+  const goFinal = async () => {
     const canvas = decorCanvasRef.current;
     if (!canvas) return;
     renderStrip();
-    setStripDataUrl(canvas.toDataURL("image/png"));
+    const imageDataUrl = canvas.toDataURL("image/png");
+    setStripDataUrl(imageDataUrl);
     stopDevCamera();
     setView("final");
+
+    // The saved file is the two-up 4×6 sheet, so one print yields two strips.
+    const sheet = await composePlainPrintSheet(imageDataUrl, bgColor);
+    setPrintSheetUrl(sheet ?? imageDataUrl);
   };
 
   return (
@@ -256,7 +311,7 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
             resetShots();
             setView("camera");
           }}
-          onContinue={goFinal}
+          onContinue={() => void goFinal()}
         />
       )}
 
@@ -264,6 +319,7 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
       {view === "final" && (
         <FinalView
           stripDataUrl={stripDataUrl}
+          printSheetUrl={printSheetUrl}
           onHome={() => {
             stopDevCamera();
             onExit();
