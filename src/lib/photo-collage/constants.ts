@@ -41,6 +41,10 @@ export const FILTERS: { key: FilterName; label: string }[] = [
   { key: "vivid", label: "Vivid" },
 ];
 
+export const STICKER_EMOJIS = ["❤️", "⭐", "✨", "🎀", "🕶️", "👑", "🐈", "🍒"];
+
+export const EMOJI_STICKER_SIZE = 84;
+
 export const LAYOUT_OPTIONS = [
   { slots: 2, label: "2 SHOTS", sub: "Classic duo" },
   { slots: 3, label: "3 SHOTS", sub: "Triple strip" },

@@ -22,8 +22,9 @@ import {
   STRIP_W,
   VERTICAL_CROP_BIAS,
 } from "@/lib/photo-collage/constants";
-import { canvasFilter, composePlainPrintSheet, slotPhotoHeight, sleep } from "@/lib/photo-collage/canvas";
-import type { CollageView, FilterName, PhotoCollageProps } from "@/lib/photo-collage/types";
+import { canvasFilter, composePlainPrintSheet, drawStickers, slotPhotoHeight, sleep } from "@/lib/photo-collage/canvas";
+import type { CollageView, FilterName, PaletteDrag, PhotoCollageProps, Sticker } from "@/lib/photo-collage/types";
+import { useStickerGestures } from "@/hooks/use-sticker-gestures";
 import { captureDevPhoto, startDevCamera, stopDevCamera } from "@/lib/dev-camera";
 import { CameraView } from "@/components/photo-collage/CameraView";
 import { DecorView } from "@/components/photo-collage/DecorView";
@@ -35,6 +36,8 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
   const [slots, setSlots] = useState(4);
   const [filter, setFilter] = useState<FilterName>("none");
   const [bgColor, setBgColor] = useState(DEFAULT_STRIP_COLOR);
+  const [stickers, setStickers] = useState<Sticker[]>([]);
+  const [paletteDrag, setPaletteDrag] = useState<PaletteDrag | null>(null);
 
   const [countdown, setCountdown] = useState<number | null>(null);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -91,6 +94,7 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
   const startSession = (nextSlots: number) => {
     resetShots();
     setSlots(nextSlots);
+    setStickers([]);
     setFilter("none");
     setBgColor(DEFAULT_STRIP_COLOR);
     setView("camera");
@@ -242,7 +246,18 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
       const qrY = STRIP_H - 154;
       ctx.drawImage(stripQrImg, qrX, qrY, qrSize, qrSize);
     }
-  }, [bgColor, filter, brandReady, stripQrReady]);
+
+    drawStickers(ctx, stickers);
+  }, [bgColor, filter, stickers, brandReady, stripQrReady]);
+
+  const {
+    onPointerDown,
+    onPointerMove,
+    onPointerUp,
+    startPaletteDrag,
+    movePaletteDrag,
+    finishPaletteDrag,
+  } = useStickerGestures({ decorCanvasRef, setStickers, setPaletteDrag });
 
   useEffect(() => {
     if (view !== "decor") return;
@@ -306,7 +321,16 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
           setBgColor={setBgColor}
           filter={filter}
           setFilter={setFilter}
+          stickers={stickers}
+          setStickers={setStickers}
+          paletteDrag={paletteDrag}
           decorCanvasRef={decorCanvasRef}
+          onCanvasPointerDown={onPointerDown}
+          onCanvasPointerMove={onPointerMove}
+          onCanvasPointerUp={onPointerUp}
+          onPalettePointerDown={startPaletteDrag}
+          onPalettePointerMove={movePaletteDrag}
+          onPalettePointerUp={finishPaletteDrag}
           onBack={() => {
             resetShots();
             setView("camera");

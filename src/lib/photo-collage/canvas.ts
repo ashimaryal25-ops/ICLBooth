@@ -1,7 +1,7 @@
 // Canvas helpers for the photo-strip flow: filters and layout maths, shared by
 // the on-screen strip and the capture preview.
 
-import type { FilterName } from "./types";
+import type { FilterName, Sticker } from "./types";
 import {
   STRIP_FOOTER_H,
   STRIP_GAP,
@@ -13,6 +13,26 @@ import {
 export function slotPhotoHeight(slotCount: number): number {
   const contentH = STRIP_H - STRIP_TOP_MARGIN - STRIP_FOOTER_H;
   return slotCount > 0 ? (contentH - (slotCount - 1) * STRIP_GAP) / slotCount : contentH;
+}
+
+/**
+ * Stickers are placed in STRIP_W x STRIP_H space; `scale`/`offsetX` map them
+ * onto a print sheet half.
+ */
+export function drawStickers(
+  ctx: CanvasRenderingContext2D,
+  stickers: Sticker[],
+  scale = 1,
+  offsetX = 0,
+) {
+  ctx.save();
+  stickers.forEach((s) => {
+    ctx.font = `${s.size * scale}px Arial`;
+    ctx.textBaseline = "middle";
+    ctx.textAlign = "center";
+    ctx.fillText(s.emoji, offsetX + s.x * scale, s.y * scale);
+  });
+  ctx.restore();
 }
 
 export function loadImage(src: string): Promise<HTMLImageElement> {
