@@ -54,6 +54,7 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
   // Bumped per capture run; a stale/overlapping loop checks this and bails.
   const captureRunRef = useRef(0);
   const decorCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const renderRafRef = useRef<number | null>(null);
   const brandImgRef = useRef<HTMLImageElement | null>(null);
   const stripQrImgRef = useRef<HTMLImageElement | null>(null);
 
@@ -259,14 +260,37 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
     finishPaletteDrag,
   } = useStickerGestures({ decorCanvasRef, setStickers, setPaletteDrag });
 
+  // Coalesce decor redraws to one per animation frame. Sticker drag/pinch fires
+  // setStickers on every pointer move (up to the digitiser's 120-240 Hz); each
+  // change gives renderStrip a new identity and re-runs this effect. Redrawing
+  // the full strip — photo re-crops plus GPU blits — per event can overwhelm the
+  // kiosk renderer and crash the tab. rAF caps it to display rate and drops the
+  // intermediate frames.
   useEffect(() => {
     if (view !== "decor") return;
-    renderStrip();
+    if (renderRafRef.current != null) cancelAnimationFrame(renderRafRef.current);
+    renderRafRef.current = requestAnimationFrame(() => {
+      renderRafRef.current = null;
+      renderStrip();
+    });
+    return () => {
+      if (renderRafRef.current != null) {
+        cancelAnimationFrame(renderRafRef.current);
+        renderRafRef.current = null;
+      }
+    };
   }, [view, renderStrip]);
 
   const goFinal = async () => {
     const canvas = decorCanvasRef.current;
     if (!canvas) return;
+
+    // Draw once synchronously so the captured strip reflects the final sticker
+    // positions even if a coalesced (rAF) redraw was still pending.
+    if (renderRafRef.current != null) {
+      cancelAnimationFrame(renderRafRef.current);
+      renderRafRef.current = null;
+    }
     renderStrip();
     const imageDataUrl = canvas.toDataURL("image/png");
     setStripDataUrl(imageDataUrl);
