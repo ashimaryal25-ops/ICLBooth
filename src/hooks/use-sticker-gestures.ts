@@ -1,8 +1,8 @@
 "use client";
 
-// Drag, pinch, and palette-drag handling for the Decorate view. See the pinch
-// note on onPointerMove and the guarded release on onPointerUp for the crash
-// fixes.
+// Drag, pinch, and palette-drag handling for the Decorate view: pointer input
+// updates the sticker refs and triggers one repaint. See the pinch note on
+// onPointerMove and the guarded release on onPointerUp for the crash fixes.
 
 import { useRef } from "react";
 import type { Dispatch, PointerEvent as ReactPointerEvent, RefObject, SetStateAction } from "react";
@@ -15,17 +15,23 @@ import type { PaletteDrag, Sticker } from "@/lib/photo-collage/types";
 
 type GestureInputs = {
   decorCanvasRef: RefObject<HTMLCanvasElement | null>;
+  scheduleComposite: () => void;
   setStickers: Dispatch<SetStateAction<Sticker[]>>;
   setPaletteDrag: Dispatch<SetStateAction<PaletteDrag | null>>;
+  stickersRef: RefObject<Sticker[]>;
+  gestureDirtyRef: RefObject<boolean>;
 };
 
 export function useStickerGestures({
   decorCanvasRef,
+  scheduleComposite,
   setStickers,
   setPaletteDrag,
+  stickersRef,
+  gestureDirtyRef,
 }: GestureInputs) {
   // Per-gesture scratch state: which pointers are down, plus the active pinch /
-  // drag / palette-drag.
+  // drag / palette-drag. Sticker edits go to stickersRef (see onPointerMove).
   const activePointersRef = useRef<Map<number, { x: number; y: number }>>(new Map());
   const pinchRef = useRef<{ id: number; startDist: number; startSize: number } | null>(null);
   const dragRef = useRef<{ id: number; dx: number; dy: number } | null>(null);
@@ -52,39 +58,53 @@ export function useStickerGestures({
     } catch {}
   };
 
+  /** Apply a gesture edit to the live list and queue one repaint. */
+  const updateActiveSticker = (id: number, patch: Partial<Sticker>) => {
+    stickersRef.current = stickersRef.current.map((s) =>
+      s.id === id ? { ...s, ...patch } : s,
+    );
+    gestureDirtyRef.current = true;
+    scheduleComposite();
+  };
+
   const onPointerDown = (e: ReactPointerEvent<HTMLCanvasElement>) => {
     const p = canvasCoords(e);
     activePointersRef.current.set(e.pointerId, p);
+    const live = stickersRef.current;
 
     if (activePointersRef.current.size === 1) {
-      setStickers((live) => {
-        for (let i = live.length - 1; i >= 0; i--) {
-          const s = live[i];
-          if (Math.hypot(p.x - s.x, p.y - s.y) < s.size / 1.2) {
-            dragRef.current = { id: s.id, dx: p.x - s.x, dy: p.y - s.y };
-            capturePointer(e.currentTarget, e.pointerId);
-            break;
-          }
+      for (let i = live.length - 1; i >= 0; i--) {
+        const s = live[i];
+        if (Math.hypot(p.x - s.x, p.y - s.y) < s.size / 1.2) {
+          dragRef.current = { id: s.id, dx: p.x - s.x, dy: p.y - s.y };
+          capturePointer(e.currentTarget, e.pointerId);
+          break;
         }
-        return live;
-      });
+      }
     } else if (activePointersRef.current.size === 2 && dragRef.current) {
       const pts = Array.from(activePointersRef.current.values());
       const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      setStickers((live) => {
-        const activeSticker = live.find((s) => s.id === dragRef.current!.id);
-        // A zero start distance would scale by Infinity/NaN on the first move.
-        if (activeSticker && dist > 0) {
-          pinchRef.current = { id: activeSticker.id, startDist: dist, startSize: activeSticker.size };
-          // Capture the second finger too, so sliding it past the canvas edge
-          // mid-pinch doesn't fire pointerout and silently cancel the zoom.
-          capturePointer(e.currentTarget, e.pointerId);
-        }
-        return live;
-      });
+      const activeSticker = live.find((s) => s.id === dragRef.current!.id);
+      // A zero start distance would scale by Infinity/NaN on the first move.
+      if (activeSticker && dist > 0) {
+        pinchRef.current = { id: activeSticker.id, startDist: dist, startSize: activeSticker.size };
+        // Capture the second finger too, so sliding it past the canvas edge
+        // mid-pinch doesn't fire pointerout and silently cancel the zoom.
+        capturePointer(e.currentTarget, e.pointerId);
+      }
     }
   };
 
+  // During a gesture we edit stickersRef and repaint from it. setStickers is
+  // called just once, on pointer up.
+  //
+  // Doing setStickers on every move used to crash the booth on pinch. The catch:
+  // setStickers(prev => ...) doesn't run right away — React runs that function
+  // on the next render. But pointer up already set pinchRef.current = null, so
+  // when React ran the leftover updater it read `.id` off null and threw. A
+  // throw during render drops the app to Next's "This page couldn't load"
+  // screen — that was the guest crash, not a GPU/browser problem. A ref has no
+  // such lag: we read its value now, not on some later render.
   const onPointerMove = (e: ReactPointerEvent<HTMLCanvasElement>) => {
     const p = canvasCoords(e);
     if (activePointersRef.current.has(e.pointerId)) {
@@ -94,29 +114,25 @@ export function useStickerGestures({
     if (activePointersRef.current.size >= 2 && pinchRef.current) {
       const pts = Array.from(activePointersRef.current.values());
       const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
-      // Read the pinch off the ref NOW rather than inside a setStickers updater.
-      // The updater runs on a later render, by which point pointer-up has set
-      // pinchRef.current = null — so it read `.id` off null and threw, and a
-      // throw during render drops the booth to "This page couldn't load".
-      const { id, startSize, startDist } = pinchRef.current;
-      const newSize = Math.max(20, Math.min(600, startSize * (dist / startDist)));
+      const newSize = Math.max(
+        20,
+        Math.min(600, pinchRef.current.startSize * (dist / pinchRef.current.startDist)),
+      );
       if (Number.isFinite(newSize)) {
-        setStickers((previous) =>
-          previous.map((s) => (s.id === id ? { ...s, size: newSize } : s)),
-        );
+        updateActiveSticker(pinchRef.current.id, { size: newSize });
       }
     } else if (activePointersRef.current.size === 1 && dragRef.current) {
-      const { id, dx, dy } = dragRef.current;
-      setStickers((previous) =>
-        previous.map((s) => (s.id === id ? { ...s, x: p.x - dx, y: p.y - dy } : s)),
-      );
+      updateActiveSticker(dragRef.current.id, {
+        x: p.x - dragRef.current.dx,
+        y: p.y - dragRef.current.dy,
+      });
     }
   };
 
   const onPointerUp = (e: ReactPointerEvent<HTMLCanvasElement>) => {
     activePointersRef.current.delete(e.pointerId);
     // Guarded release: only the finger that grabbed the sticker was captured, so
-    // an unconditional releasePointerCapture threw NotFoundError when the
+    // the old unconditional releasePointerCapture threw NotFoundError when the
     // *second* finger of a pinch was the last one lifted — a second route to the
     // same crash screen.
     releasePointer(e.currentTarget, e.pointerId);
@@ -125,6 +141,12 @@ export function useStickerGestures({
     }
     if (activePointersRef.current.size === 0) {
       dragRef.current = null;
+      // Publish the gesture result once it is over, so print/export and the rest
+      // of the UI see the final position and size.
+      if (gestureDirtyRef.current) {
+        gestureDirtyRef.current = false;
+        setStickers(stickersRef.current);
+      }
     }
   };
 

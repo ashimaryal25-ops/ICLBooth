@@ -54,6 +54,8 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
   // Bumped per capture run; a stale/overlapping loop checks this and bails.
   const captureRunRef = useRef(0);
   const decorCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  // Offscreen base under the stickers; repainted only on change, blitted per frame.
+  const baseCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const renderRafRef = useRef<number | null>(null);
   const brandImgRef = useRef<HTMLImageElement | null>(null);
   const stripQrImgRef = useRef<HTMLImageElement | null>(null);
@@ -173,12 +175,15 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
   }, [view, slots, retakeNonce]);
 
   // --- Strip rendering (direct port of renderPhotoStripCanvas) --------------
-  const renderStrip = useCallback(() => {
-    const canvas = decorCanvasRef.current;
-    if (!canvas) return;
-    if (canvas.width !== STRIP_W || canvas.height !== STRIP_H) {
+  // Paint everything under the stickers into the offscreen base. Heavy pass,
+  // split from the cheap sticker composite so drags stay smooth.
+  const renderBase = useCallback(() => {
+    let canvas = baseCanvasRef.current;
+    if (!canvas) {
+      canvas = document.createElement("canvas");
       canvas.width = STRIP_W;
       canvas.height = STRIP_H;
+      baseCanvasRef.current = canvas;
     }
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
@@ -247,10 +252,55 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
       const qrY = STRIP_H - 154;
       ctx.drawImage(stripQrImg, qrX, qrY, qrSize, qrSize);
     }
+  }, [bgColor, filter, brandReady, stripQrReady]);
 
-    drawStickers(ctx, stickers);
-  }, [bgColor, filter, stickers, brandReady, stripQrReady]);
+  // Gesture refs are created here and passed into useStickerGestures, so the
+  // React Compiler treats them as plain component refs.
+  const stickersRef = useRef<Sticker[]>([]);
+  const gestureDirtyRef = useRef(false);
 
+  /**
+   * Blit the prepared base onto the visible canvas and stamp the stickers on
+   * top. This is all a drag/pinch costs: one full-canvas copy plus a handful of
+   * small sticker blits, with no photo re-cropping and no filter passes.
+   */
+  const composite = useCallback(() => {
+    const canvas = decorCanvasRef.current;
+    const base = baseCanvasRef.current;
+    if (!canvas || !base) return;
+    // Assigning width/height reallocates and clears the backing store, so only
+    // do it when the size actually differs. STRIP_W/H are constant: once.
+    if (canvas.width !== STRIP_W || canvas.height !== STRIP_H) {
+      canvas.width = STRIP_W;
+      canvas.height = STRIP_H;
+    }
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(base, 0, 0);
+    drawStickers(ctx, stickersRef.current);
+  }, []);
+
+  /** Full repaint: rebuild the base, then composite. */
+  const renderStrip = useCallback(() => {
+    renderBase();
+    composite();
+  }, [renderBase, composite]);
+
+  /**
+   * Coalesce gesture repaints to one per animation frame, so a 120-240 Hz
+   * digitiser cannot queue more canvas work than the display can retire.
+   */
+  const scheduleComposite = useCallback(() => {
+    if (renderRafRef.current != null) return;
+    renderRafRef.current = requestAnimationFrame(() => {
+      renderRafRef.current = null;
+      composite();
+    });
+  }, [composite]);
+
+  // --- Sticker gestures (drag / pinch / palette) ----------------------------
+  // This hook must be called after scheduleComposite (it takes it as an
+  // argument) and before the render effects below that read stickersRef.
   const {
     onPointerDown,
     onPointerMove,
@@ -258,28 +308,45 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
     startPaletteDrag,
     movePaletteDrag,
     finishPaletteDrag,
-  } = useStickerGestures({ decorCanvasRef, setStickers, setPaletteDrag });
+  } = useStickerGestures({
+    decorCanvasRef,
+    scheduleComposite,
+    setStickers,
+    setPaletteDrag,
+    stickersRef,
+    gestureDirtyRef,
+  });
 
-  // Coalesce decor redraws to one per animation frame. Sticker drag/pinch fires
-  // setStickers on every pointer move (up to the digitiser's 120-240 Hz); each
-  // change gives renderStrip a new identity and re-runs this effect. Redrawing
-  // the full strip — photo re-crops plus GPU blits — per event can overwhelm the
-  // kiosk renderer and crash the tab. rAF caps it to display rate and drops the
-  // intermediate frames.
+  // Rebuild the base whenever one of its inputs changes. Deliberately NOT
+  // dependent on `stickers`: moving a sticker must never trigger this pass.
   useEffect(() => {
     if (view !== "decor") return;
-    if (renderRafRef.current != null) cancelAnimationFrame(renderRafRef.current);
-    renderRafRef.current = requestAnimationFrame(() => {
-      renderRafRef.current = null;
-      renderStrip();
-    });
+    renderStrip();
+  }, [view, renderStrip]);
+
+  // Keyed on `stickers` alone: a gesture never calls setStickers until it ends,
+  // so this can't clobber the live list mid-drag.
+  useEffect(() => {
+    stickersRef.current = stickers;
+  }, [stickers]);
+
+  // Cheap repaint when the committed sticker list changes (added, cleared, or a
+  // gesture ended). Called directly rather than via rAF so the strip still
+  // paints on a backgrounded tab.
+  useEffect(() => {
+    if (view !== "decor") return;
+    composite();
+  }, [view, stickers, composite]);
+
+  // Drop any queued gesture frame when leaving Decorate.
+  useEffect(() => {
     return () => {
       if (renderRafRef.current != null) {
         cancelAnimationFrame(renderRafRef.current);
         renderRafRef.current = null;
       }
     };
-  }, [view, renderStrip]);
+  }, [view]);
 
   const goFinal = async () => {
     const canvas = decorCanvasRef.current;
@@ -290,6 +357,10 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
     if (renderRafRef.current != null) {
       cancelAnimationFrame(renderRafRef.current);
       renderRafRef.current = null;
+    }
+    if (gestureDirtyRef.current) {
+      gestureDirtyRef.current = false;
+      setStickers(stickersRef.current);
     }
     renderStrip();
     const imageDataUrl = canvas.toDataURL("image/png");
