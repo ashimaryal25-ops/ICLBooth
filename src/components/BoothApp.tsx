@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { Home } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CardForm } from "@/components/CardForm";
 import { CardPreview } from "@/components/CardPreview";
 import { CardReveal } from "@/components/CardReveal";
@@ -11,6 +12,12 @@ import { createFallbackCard } from "@/lib/fallback-card";
 import { generateCardIdentity } from "@/lib/generate-card-client";
 
 type Step = "choose" | "cardSetup" | "generating" | "reveal" | "collage";
+
+// Two builds of Ghost Runner. The home-screen tile runs the self-playing
+// attract build (dimmed, with its own START overlay, no camera, no sound); going
+// fullscreen swaps in Raiyat's full game with Level 2, audio and hand tracking.
+const ATTRACT_SRC = "/ghost-runner/attract.html";
+const GAME_SRC = "/ghost-runner/index.html";
 
 const sampleCard = createFallbackCard({
   name: "Your Name",
@@ -35,6 +42,47 @@ export function BoothApp() {
   const [photo, setPhoto] = useState<string | null>(null);
   const [card, setCard] = useState<CardIdentity | null>(null);
   const [isSampleCardOpen, setIsSampleCardOpen] = useState(false);
+  const [isGameFullscreen, setIsGameFullscreen] = useState(false);
+  const [gameSrc, setGameSrc] = useState(ATTRACT_SRC);
+  const gamePanelRef = useRef<HTMLDivElement>(null);
+  const gameFrameRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    // Single exit path for every way out of the game (Home button, Esc key, kiosk
+    // policy): drop back to the attract build, which reloads clean and silent.
+    const handleFullscreenChange = () => {
+      const isFullscreen = document.fullscreenElement === gamePanelRef.current;
+      setIsGameFullscreen(isFullscreen);
+      if (!isFullscreen) {
+        setGameSrc(ATTRACT_SRC);
+      }
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const toggleGameFullscreen = useCallback(async () => {
+    try {
+      if (document.fullscreenElement === gamePanelRef.current) {
+        await document.exitFullscreen();
+        return;
+      }
+      // Swap to the real game first, then go fullscreen. Browsers only allow
+      // fullscreen as a direct result of the user's click, so this has to run
+      // during the same tap that triggered it.
+      setGameSrc(GAME_SRC);
+      await gamePanelRef.current?.requestFullscreen();
+    } catch {
+      // Fullscreen can be blocked by browser or kiosk policy; the embedded
+      // tile remains playable when that happens.
+    }
+  }, []);
+
+  const leaveGameForHome = useCallback(async () => {
+    if (document.fullscreenElement) {
+      await document.exitFullscreen();
+    }
+  }, []);
 
   const resetCardFlow = useCallback(() => {
     setStep("cardSetup");
@@ -89,7 +137,7 @@ export function BoothApp() {
         }
       >
         {step === "choose" && (
-          <section className="choice-stage grid h-full w-full grid-cols-1 sm:grid-cols-2">
+          <section className="choice-stage grid h-full w-full grid-cols-1 sm:grid-cols-3">
             <button
               type="button"
               onClick={() => setStep("cardSetup")}
@@ -125,6 +173,41 @@ export function BoothApp() {
                 </span>
               </span>
             </button>
+
+            {/* Ghost Runner runs live in its tile: the attract build plays itself
+                behind a transparent catcher that promotes a tap to fullscreen. */}
+            <div ref={gamePanelRef} className="group relative overflow-hidden bg-[#0a0a1a]">
+              <iframe
+                ref={gameFrameRef}
+                src={gameSrc}
+                title="Ghost Runner Game"
+                allow="camera; fullscreen"
+                allowFullScreen
+                className="absolute inset-0 h-full w-full border-0"
+              />
+              {isGameFullscreen && (
+                <button
+                  type="button"
+                  onClick={leaveGameForHome}
+                  className="absolute bottom-6 right-6 z-20 inline-flex h-24 items-center gap-4 rounded-[12px] border-2 border-white bg-[var(--gc-orange)] px-10 text-2xl font-black text-white shadow-[0_4px_12px_rgba(0,0,0,0.35)] transition-colors hover:bg-[#b94300] active:bg-[#963700]"
+                >
+                  <Home size={34} strokeWidth={2.5} />
+                  Home
+                </button>
+              )}
+              {/* The attract build paints its own START button, so this is a
+                  transparent catcher: it shows that button through, but keeps
+                  taps off the iframe (which would start the attract game in the
+                  tile instead of going fullscreen). */}
+              {!isGameFullscreen && (
+                <button
+                  type="button"
+                  onClick={toggleGameFullscreen}
+                  aria-label="Play Ghost Runner full screen"
+                  className="absolute inset-0 z-20 h-full w-full cursor-pointer bg-transparent"
+                />
+              )}
+            </div>
           </section>
         )}
 
