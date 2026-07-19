@@ -61,6 +61,41 @@ export function BoothApp() {
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
   }, []);
 
+  // Warm Ghost Runner's game assets into the browser HTTP cache at boot so the
+  // first tap starts from cache instead of re-downloading every GIF/video/sound.
+  // Only the bytes are fetched — the game document is NOT loaded or run until the
+  // guest taps the tile, so there's no background rendering or camera use.
+  useEffect(() => {
+    const warmUrls = [
+      "/ghost-runner/index.html",
+      // Keep the "?v=..." exactly as the HTML asks for it. The browser treats
+      // "/style.css" and "/style.css?v=2" as two different files, so pre-loading
+      // the wrong one is wasted — the game would still download the real one.
+      "/ghost-runner/style.css?v=1",
+      // Keep in sync with the <script> tags in index.html and attract.html.
+      "/ghost-runner/game.js?v=1",
+      "/ghost-runner/attract.html",
+      "/ghost-runner/attract.js?v=1",
+      "/ghost-runner/Assets/background animation 1.mp4",
+      "/ghost-runner/Assets/background_lvl2.mp4",
+      "/ghost-runner/Assets/game_background.mp4",
+      "/ghost-runner/Assets/start_sound.wav",
+      "/ghost-runner/Assets/Obstacle_hitting_sound.mp3",
+      "/ghost-runner/Assets/jump.wav",
+      "/ghost-runner/Assets/Score_20.mp3",
+      "/ghost-runner/Assets/lvl2_bgsound.wav",
+      "/ghost-runner/Assets/ghostgifani.gif",
+      "/ghost-runner/Assets/enemyghost 1 gif ani.gif",
+      "/ghost-runner/Assets/random ghost gif.gif",
+      "/ghost-runner/Assets/bunny ani gif.gif",
+      "/ghost-runner/Assets/squirl gift .gif",
+      "/ghost-runner/Assets/tree animations gif.gif",
+      "/ghost-runner/Assets/lvl2_enemy.gif",
+      "/ghost-runner/Assets/lvl2_enemy2.gif",
+    ];
+    warmUrls.forEach((url) => void fetch(url).catch(() => {}));
+  }, []);
+
   const toggleGameFullscreen = useCallback(async () => {
     try {
       if (document.fullscreenElement === gamePanelRef.current) {
