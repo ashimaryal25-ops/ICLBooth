@@ -25,7 +25,7 @@ import {
 import { canvasFilter, composePlainPrintSheet, drawStickers, slotPhotoHeight, sleep } from "@/lib/photo-collage/canvas";
 import type { CollageView, FilterName, PaletteDrag, PhotoCollageProps, Sticker } from "@/lib/photo-collage/types";
 import { useStickerGestures } from "@/hooks/use-sticker-gestures";
-import { captureDevPhoto, startDevCamera, stopDevCamera } from "@/lib/dev-camera";
+import { useMirrorRelay } from "@/hooks/use-mirror-relay";
 import { CameraView } from "@/components/photo-collage/CameraView";
 import { DecorView } from "@/components/photo-collage/DecorView";
 import { FinalView } from "@/components/photo-collage/FinalView";
@@ -59,6 +59,9 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
   const renderRafRef = useRef<number | null>(null);
   const brandImgRef = useRef<HTMLImageElement | null>(null);
   const stripQrImgRef = useRef<HTMLImageElement | null>(null);
+
+  // --- Camera relay ---------------------------------------------------------
+  const { sendToMirror, stopCamera, requestMirrorPhoto } = useMirrorRelay();
 
   // The ICL mark is local, so drawing it cannot taint the printable canvas.
   useEffect(() => {
@@ -116,27 +119,25 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
     const isStale = () => cancelled || runId !== captureRunRef.current;
 
     (async () => {
-      try {
-        await startDevCamera();
-      } catch {
-        if (!isStale()) setCameraError("Could not open the camera. Check permissions and try again.");
-        return;
-      }
+      sendToMirror({ type: "mirror-start" });
+      sendToMirror({ type: "mirror-ping" });
       await sleep(500);
 
       for (let i = 0; i < slots; i++) {
         for (let t = 3; t > 0; t--) {
           if (isStale()) return;
           setCountdown(t);
+          sendToMirror({ type: "countdown", value: t });
           await sleep(1000);
         }
         if (isStale()) return;
         setCountdown(null);
+        sendToMirror({ type: "countdown", value: 0 });
 
-        const photo = captureDevPhoto();
+        const photo = await requestMirrorPhoto();
         if (isStale()) return;
         if (!photo) {
-          setCameraError("The camera did not return a photo. Try again.");
+          setCameraError("Please check the camera screen and try again.");
           return;
         }
 
@@ -155,8 +156,7 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
           c.height = 480;
           const cx = c.getContext("2d");
           if (cx) {
-            // The camera hands back a mirrored (selfie) view; flip it back so
-            // the stored shot is true-to-life and the strip does the mirroring.
+            // The CRT relay sends its mirrored view; flip it back for the print.
             cx.translate(640, 0);
             cx.scale(-1, 1);
             cx.drawImage(image, 0, 0, 640, 480);
@@ -172,7 +172,7 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
     return () => {
       cancelled = true;
     };
-  }, [view, slots, retakeNonce]);
+  }, [view, slots, retakeNonce, requestMirrorPhoto, sendToMirror]);
 
   // --- Strip rendering (direct port of renderPhotoStripCanvas) --------------
   // Paint everything under the stickers into the offscreen base. Heavy pass,
@@ -365,7 +365,7 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
     renderStrip();
     const imageDataUrl = canvas.toDataURL("image/png");
     setStripDataUrl(imageDataUrl);
-    stopDevCamera();
+    stopCamera();
     setView("final");
 
     // The saved file is the two-up 4×6 sheet, so one print yields two strips.
@@ -401,7 +401,7 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
           cameraError={cameraError}
           sessionDone={sessionDone}
           onBack={() => {
-            stopDevCamera();
+            stopCamera();
             setView("layout");
           }}
           onRetakeAll={retakeAll}
@@ -440,7 +440,7 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
           stripDataUrl={stripDataUrl}
           printSheetUrl={printSheetUrl}
           onHome={() => {
-            stopDevCamera();
+            stopCamera();
             onExit();
           }}
         />

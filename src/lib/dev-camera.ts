@@ -1,9 +1,17 @@
 /**
- * Webcam capture helper.
+ * Laptop-only camera fallback.
+ *
+ * On the booth the camera is owned by `public/camera-mirror.html` running on the
+ * second screen, and the app asks it for stills over BroadcastChannel/`/api/mirror`.
+ * That mirror window isn't running during laptop testing, so with
+ * NEXT_PUBLIC_DEV_CAMERA=1 the booth page grabs the webcam itself and serves the
+ * same stills locally.
  *
  * The stream is acquired once and kept in a single always-playing hidden <video>.
  * Capturing from a video that is already playing avoids the black-frame race you
  * get from creating a fresh element and drawing before it has any dimensions.
+ *
+ * The flag must stay unset on the kiosk so the mirror path is untouched.
  */
 
 const GLOBAL_KEY = "__boothCamera";
@@ -13,6 +21,13 @@ interface DevCamera {
   video: HTMLVideoElement;
 }
 
+export function isDevCamera(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    process.env.NEXT_PUBLIC_DEV_CAMERA === "1"
+  );
+}
+
 function existing(): DevCamera | null {
   if (typeof window === "undefined") return null;
   return (window as unknown as Record<string, DevCamera | undefined>)[GLOBAL_KEY] ?? null;
@@ -20,6 +35,8 @@ function existing(): DevCamera | null {
 
 /** Acquire the webcam once and park it in a hidden, playing <video>. */
 export async function startDevCamera(): Promise<DevCamera | null> {
+  if (!isDevCamera()) return null;
+
   const already = existing();
   if (already) return already;
 
@@ -62,8 +79,8 @@ export function stopDevCamera(): void {
 }
 
 /**
- * Grab a mirrored still (selfie-style), so the saved photo matches what guests
- * expect from a mirror-like preview.
+ * Grab a mirrored still, matching what the mirror window returns so the card and
+ * collage flows can't tell the difference.
  */
 export function captureDevPhoto(): string | null {
   const camera = existing();
