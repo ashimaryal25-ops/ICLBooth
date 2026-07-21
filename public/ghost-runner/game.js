@@ -1,6 +1,11 @@
 const canvas = document.getElementById("gameCanvas");
 let gameOver = false;
 let leaderBoard = [];
+// Fetch leaderboard on load
+fetch('/api/leaderboard')
+  .then(res => res.json())
+  .then(data => { if(Array.isArray(data)) leaderBoard = data; });
+
 let enteringName = false;
 let showingLeaderBoard = false;
 let leaderboardAnimationProgress = 0;
@@ -39,17 +44,24 @@ let lvl2GraceTimer = 0;
 const startMusic = new Audio("Assets/start_sound.wav");
 startMusic.loop = true;
 startMusic.volume = 0.2;
+startMusic.muted = true;
 
 const hitSound = new Audio("Assets/Obstacle_hitting_sound.mp3");
 hitSound.volume = 1.0;
+hitSound.muted = true;
+
 const jumpSound = new Audio("Assets/jump.wav");
+jumpSound.muted = true;
 
 let audioUnlocked = false;
 
 const score20Sound = new Audio("Assets/Score_20.mp3");
+score20Sound.muted = true;
+
 const lvl2BgSound = new Audio("Assets/lvl2_bgsound.wav");
 lvl2BgSound.loop = true;
 lvl2BgSound.volume = 0.2;
+lvl2BgSound.muted = true;
 let score20Played = false;
 
 // background video for start screen
@@ -230,33 +242,69 @@ function spawnObstacleLvl2() {
   });
 }
 
-function jump(force) {
-  if (!audioUnlocked) {
+function reportActivity() {
+  if (window.parent && window.parent.postMessage) {
+    window.parent.postMessage({ type: "ghost-runner:activity" }, window.location.origin);
+  }
+}
+
+function jump(force, isAuto = false) {
+  if (!isAuto && !audioUnlocked) {
     audioUnlocked = true;
     hitSound.play().then(function() { hitSound.pause(); }).catch(function() {});
     jumpSound.play().then(function() { jumpSound.pause(); }).catch(function() {});
     score20Sound.play().then(function() { score20Sound.pause(); }).catch(function() {});
     lvl2BgSound.play().then(function() { lvl2BgSound.pause(); }).catch(function() {});
-    startMusic.play().catch(function() {});
   }
-  const f = force || jumpForce;
-  if (showingLeaderBoard) { showingLeaderBoard = false; resetGame(); return; }
+  
+  if (showingLeaderBoard) { if(!isAuto){ showingLeaderBoard = false; resetGame(); } return; }
   if (enteringName) return;
-  if (!gameStarted) {
-    gameStarted = true;
-    bgVideo.pause();
-    gameBgVideo.play();
-    return;
-  }
+
   if (gameOver) {
-    if (checkTopFive()) { enteringName = true; }
-    else { showingLeaderBoard = true; leaderboardAnimationProgress = 0; }
+    if(!isAuto) resetGame();
     return;
   }
-  if (!ghost.jumping) { ghost.velocityY = f; ghost.jumping = true; }
+  
+  if (!gameStarted) {
+    if(!isAuto){
+      gameStarted = true;
+      score = 0;
+      obstacles = [];
+      spawnObstacle();
+      bgVideo.pause();
+      gameBgVideo.play();
+      startMusic.play().catch(function(e){});
+    }
+  }
+  
+  let f = force || jumpForce;
+  if (!ghost.jumping) {
+      if(!isAuto) reportActivity();
+      ghost.velocityY = f;
+      ghost.jumping = true;
+    }
 }
 
-document.addEventListener("keydown", function(e) { if (e.code === "Space") jump(); });
+document.addEventListener("keydown", function(e) { if (e.code === "Space") { reportActivity(); jump(); } });
+
+window.addEventListener("message", e => {
+  if (e.data && e.data.type === "ghost-runner:reset") {
+    resetGame();
+  } else if (e.data && e.data.type === "ghost-runner:unmute") {
+    audioUnlocked = true; // assume unlocked by user tap in BoothApp
+    startMusic.muted = false;
+    lvl2BgSound.muted = false;
+    hitSound.muted = false;
+    jumpSound.muted = false;
+    score20Sound.muted = false;
+  } else if (e.data && e.data.type === "ghost-runner:mute") {
+    startMusic.muted = true;
+    lvl2BgSound.muted = true;
+    hitSound.muted = true;
+    jumpSound.muted = true;
+    score20Sound.muted = true;
+  }
+});
 
 // DEBUG: press "2" to jump straight into Level 2 for testing.
 // Remove this block once Level 2 testing is done.
@@ -291,7 +339,8 @@ document.addEventListener("keydown", function(e) {
     lvl2BgSound.play();
   }
 });
-canvas.addEventListener("touchstart", function() { jump(); });
+canvas.addEventListener("touchstart", function() { reportActivity(); jump(); });
+canvas.addEventListener("mousedown", function() { reportActivity(); jump(); });
 
 let handY = null;
 let handX = null;
@@ -304,12 +353,144 @@ const webcamVideo = document.createElement("video");
 webcamVideo.width = 640; webcamVideo.height = 480;
 webcamVideo.autoplay = true; webcamVideo.playsInline = true;
 
-navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
-  webcamVideo.srcObject = stream;
-  webcamVideo.play();
-}).catch(function(e) { console.warn("Webcam not available:", e); });
+let gameStream = null;
+let cameraActive = false;
+let fallbackCameraAttempts = 0;
+let lastCamError = "";
 
-const handsModel = new Hands({
+// --- Live frames from the booth mirror ------------------------------------
+// On the kiosk the single webcam is owned by camera-mirror.html, so the game
+// cannot open it directly (NotReadableError: Device in use). The mirror instead
+// streams us small raw frames over BroadcastChannel and we feed those to MediaPipe.
+// This is preferred over getUserMedia; the direct-camera path below is only a
+// fallback for laptops/dev machines where no mirror is running.
+const mirrorImg = new Image();
+let mirrorImgReady = false;
+mirrorImg.onload = function() { mirrorImgReady = true; };
+let lastMirrorFrameAt = 0;
+let mirrorFrameCount = 0;
+function mirrorFramesLive() {
+  return performance.now() - lastMirrorFrameAt < 1500;
+}
+
+function onMirrorFrame(dataUrl) {
+  lastMirrorFrameAt = performance.now();
+  mirrorFrameCount++;
+  cameraActive = true;
+  lastCamError = "";
+  mirrorImg.src = dataUrl;
+}
+
+const handsCh = (typeof BroadcastChannel !== "undefined")
+  ? new BroadcastChannel("cardifybooth-mirror")
+  : null;
+if (handsCh) {
+  handsCh.onmessage = function(e) {
+    const d = e.data || {};
+    if (d.type === "hands-frame" && d.dataUrl) onMirrorFrame(d.dataUrl);
+  };
+}
+
+// Ask the mirror to stream over BOTH transports (the game window may only be able to
+// reach the mirror over one of them), and keep asking so it auto-stops when we leave.
+function pingMirror() {
+  if (handsCh) handsCh.postMessage({ type: "hands-stream-start" });
+  fetch("/api/mirror", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ target: "mirror", type: "hands-stream-start" }),
+  }).catch(function() {});
+}
+pingMirror();
+setInterval(pingMirror, 1000);
+window.addEventListener("unload", function() {
+  if (handsCh) handsCh.postMessage({ type: "hands-stream-stop" });
+  fetch("/api/mirror", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ target: "mirror", type: "hands-stream-stop" }),
+    keepalive: true,
+  }).catch(function() {});
+});
+
+// Relay fallback: poll for frames the mirror pushed through /api/mirror. This is the
+// path that works when the mirror runs in a different browser/instance than the game
+// (BroadcastChannel can't cross that boundary, but the server relay can).
+let handsRelaySince = 0;
+async function pollHandsRelay() {
+  try {
+    const r = await fetch("/api/mirror?role=kiosk&since=" + handsRelaySince, { cache: "no-store" });
+    const data = await r.json();
+    const events = (data && data.events) || [];
+    for (let i = 0; i < events.length; i++) {
+      const ev = events[i];
+      if (ev.id) handsRelaySince = Math.max(handsRelaySince, ev.id);
+      if (ev.type === "hands-frame" && ev.dataUrl) onMirrorFrame(ev.dataUrl);
+    }
+  } catch (e) {}
+  setTimeout(pollHandsRelay, 100);
+}
+pollHandsRelay();
+
+/** The image MediaPipe/HUD should read this frame, or null if nothing is ready. */
+function activeFrameSource() {
+  if (mirrorFramesLive()) {
+    return (mirrorImgReady && mirrorImg.naturalWidth) ? mirrorImg : null;
+  }
+  if (webcamVideo.readyState >= 2 && webcamVideo.videoWidth) return webcamVideo;
+  return null;
+}
+
+function acquireCamera() {
+  if (cameraActive) return;
+
+  // Prefer mirror frames; don't fight the mirror for the physical device.
+  if (mirrorFramesLive()) { cameraActive = true; return; }
+
+  if (window.parent && window.parent.__boothCamera && window.parent.__boothCamera.stream) {
+    gameStream = window.parent.__boothCamera.stream;
+    webcamVideo.srcObject = gameStream;
+    webcamVideo.play().catch(function(e) {});
+    cameraActive = true;
+    console.log("Using shared booth camera");
+    return;
+  }
+
+  fallbackCameraAttempts++;
+
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    console.warn("navigator.mediaDevices.getUserMedia is not supported (likely HTTP). Camera disabled.");
+    return;
+  }
+
+  // Loose constraints on purpose: laptop webcams reject exact sizes with
+  // OverconstrainedError, which reads as a dead camera.
+  navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
+    gameStream = stream;
+    webcamVideo.srcObject = stream;
+    webcamVideo.play().catch(function(e) {});
+    cameraActive = true;
+    console.log("Game fallback camera acquired");
+  }).catch(function(e) {
+    lastCamError = e.name || "error";
+    console.warn("Camera unavailable (" + e.name + "): " + e.message);
+    // Keep retrying indefinitely: on the booth the mirror holds the camera and may
+    // release it later, so giving up after a few tries strands the game camera-less.
+    setTimeout(acquireCamera, 2000);
+  });
+}
+
+window.addEventListener('unload', function() {
+  if (gameStream && (!window.parent || !window.parent.__boothCamera || gameStream !== window.parent.__boothCamera.stream)) {
+    gameStream.getTracks().forEach(function(track) { track.stop(); });
+  }
+});
+
+// Give the mirror ~1.2s to start streaming before trying to grab the camera
+// directly (which fails on the kiosk and only matters on a mirror-less laptop).
+setTimeout(function() { if (!mirrorFramesLive()) acquireCamera(); }, 1200);
+
+const handsModel = new window.Hands({
   locateFile: function(f) { return "https://cdn.jsdelivr.net/npm/@mediapipe/hands@0.4/" + f; }
 });
 handsModel.setOptions({ maxNumHands: 1, modelComplexity: 0, minDetectionConfidence: 0.5, minTrackingConfidence: 0.5 });
@@ -343,9 +524,9 @@ handsModel.onResults(function(results) {
 
     if (prevHandY !== null) {
       const dy = prevHandY - handY;
-      if (dy > 0.035 && gameStarted && !gameOver && !ghost.jumping) {
-        const force = -(14 + Math.min(dy * 80, 4));
-        jump(force);
+      if (dy > 0.03 && gameStarted && !gameOver && !ghost.jumping && !transitioning) {
+        reportActivity();
+        jump(jumpForce);
       }
     }
   } else {
@@ -359,11 +540,23 @@ handsModel.onResults(function(results) {
   }
 });
 
-const handsCamera = new Camera(webcamVideo, {
-  onFrame: async function() { await handsModel.send({ image: webcamVideo }); },
-  width: 640, height: 480
-});
-handsCamera.start().catch(function(e) { console.warn("MediaPipe camera error:", e); });
+// Drive hand tracking off the stream acquireCamera() already set up. MediaPipe's
+// Camera util opens its OWN getUserMedia and ignores webcamVideo.srcObject, which
+// on a single-consumer webcam throws NotReadableError ("Device in use") because the
+// booth/mirror already holds the device. A manual rAF loop reuses the one stream.
+let handsBusy = false;
+async function pumpHands() {
+  const src = activeFrameSource();
+  if (src && !handsBusy) {
+    handsBusy = true;
+    try {
+      await handsModel.send({ image: src });
+    } catch (e) {}
+    handsBusy = false;
+  }
+  requestAnimationFrame(pumpHands);
+}
+requestAnimationFrame(pumpHands);
 
 nameInput.addEventListener("keydown", function(e) {
   if (e.key === "Enter") {
@@ -628,6 +821,7 @@ function drawNameInput() {
   nameInput.focus();
 }
 
+
 function drawStartScreen() {
   if (bgVideo.readyState >= 2) {
     if (bgVideo.paused) bgVideo.play();
@@ -652,6 +846,10 @@ function drawStartScreen() {
 }
 
 function resetGame() {
+  showingLeaderBoard = false;
+  leaderboardAnimationProgress = 0;
+  enteringName = false;
+  gameStarted = false;
   score20Played = false;
   currentLevel = 1;
   transitioning = false;
@@ -670,9 +868,11 @@ function resetGame() {
   lvl2BgSound.currentTime = 0;
   lvl2BgVideo.pause();
   lvl2BgVideo.currentTime = 0;
-  gameBgVideo.play();
-  startMusic.play();
+  gameBgVideo.pause();
+  gameBgVideo.currentTime = 0;
+  startMusic.play().catch(function(e) {});
   bgVideo.currentTime = 0;
+  bgVideo.play().catch(function(e) {});
   spawnObstacle();
 }
 
@@ -734,7 +934,13 @@ function gameLoop(timestamp) {
   } else if (showingLeaderBoard) {
     drawleaderBoard();
   } else if (gameOver) {
-    drawGameBackground();
+    // Match the gameplay branch below: the freeze-frame keeps the level you died
+    // on, otherwise Level 2 enemies sit frozen over the Level 1 background.
+    if (currentLevel === 1) {
+      drawGameBackground();
+    } else {
+      drawLvl2Background();
+    }
     drawGround(); drawGhost(); drawObstacles(); drawScore(); drawGameOver();
   } else {
     if (currentLevel === 1) {
@@ -752,7 +958,68 @@ function gameLoop(timestamp) {
     drawObstacles();
     drawScore();
   }
+  drawCameraHUD();
   requestAnimationFrame(gameLoop);
+}
+
+// Small self-view so the player (and whoever is setting up the booth) can see at a
+// glance whether the camera feed and hand tracking are alive. Green border = a hand
+// is being tracked; the dot follows your hand. Set SHOW_CAM_HUD = false to hide it.
+const SHOW_CAM_HUD = true;
+function drawCameraHUD() {
+  if (!SHOW_CAM_HUD) return;
+  const w = 176, h = 132, pad = 16;
+  const x = canvas.width - w - pad, y = pad;
+  const handSeen = handX !== null && framesSinceHandSeen < 25;
+
+  ctx.save();
+  ctx.globalAlpha = 0.9;
+  ctx.fillStyle = "#000";
+  ctx.fillRect(x, y, w, h);
+
+  const src = activeFrameSource();
+  if (src) {
+    // Mirror so it reads like a selfie, matching how handX is used in the game.
+    ctx.save();
+    ctx.translate(x + w, y);
+    ctx.scale(-1, 1);
+    ctx.drawImage(src, 0, 0, w, h);
+    ctx.restore();
+  } else {
+    ctx.fillStyle = "#fff";
+    ctx.font = "14px sans-serif";
+    ctx.textAlign = "center";
+    var msg = cameraActive ? "starting camera..." : "no camera";
+    if (!cameraActive && lastCamError) msg += " (" + lastCamError + ")";
+    ctx.fillText(msg, x + w / 2, y + h / 2);
+    ctx.textAlign = "left";
+  }
+
+  // handX is already mirrored (1 - handX used in-game), so place the dot un-flipped.
+  if (handSeen) {
+    const dotX = x + (1 - handX) * w;
+    const dotY = y + (handY !== null ? handY * h : h / 2);
+    ctx.fillStyle = "#39FF14";
+    ctx.beginPath();
+    ctx.arc(dotX, dotY, 7, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = handSeen ? "#39FF14" : "#ff4444";
+  ctx.strokeRect(x, y, w, h);
+
+  // Diagnostic line: how many frames we've received from the mirror + camera state.
+  // mir>0 means the mirror is streaming to us; mir 0 means it isn't (old code / not
+  // refreshed / channel not connected). Remove with SHOW_CAM_HUD once it's working.
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = "#39FF14";
+  ctx.font = "12px monospace";
+  ctx.textAlign = "right";
+  var camState = mirrorFramesLive() ? "mirror" : (cameraActive ? "direct" : (lastCamError || "none"));
+  ctx.fillText("mir " + mirrorFrameCount + " | cam " + camState, x + w, y + h + 16);
+  ctx.textAlign = "left";
+  ctx.restore();
 }
 
 loadAssets().then(function() {

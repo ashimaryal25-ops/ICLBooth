@@ -9,6 +9,7 @@ import { ImageUpload } from "@/components/ImageUpload";
 import { PhotoCollage } from "@/components/PhotoCollage";
 import type { CardIdentity, CardRequest } from "@/lib/card-schema";
 import { createFallbackCard } from "@/lib/fallback-card";
+import { isDevCamera, startDevCamera, stopDevCamera } from "@/lib/dev-camera";
 import { generateCardIdentity } from "@/lib/generate-card-client";
 
 type Step = "choose" | "cardSetup" | "generating" | "reveal" | "collage";
@@ -59,6 +60,29 @@ export function BoothApp() {
     };
     document.addEventListener("fullscreenchange", handleFullscreenChange);
     return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  // Laptop testing only. On the kiosk the mirror window owns the camera and this
+  // never runs, so the card and collage keep talking to the mirror as before.
+  // Ghost Runner picks the stream up off window.__boothCamera instead of opening
+  // a second one.
+  useEffect(() => {
+    if (!isDevCamera()) return;
+    let cancelled = false;
+
+    void startDevCamera().catch((error: unknown) => {
+      if (cancelled) return;
+      const name = error instanceof Error ? error.name : "unknown";
+      const message = error instanceof Error ? error.message : String(error);
+      // Surfaced loudly because a silent failure here looks identical to a
+      // black camera, and OverconstrainedError/NotAllowedError need different fixes.
+      console.error(`[dev-camera] ${name}: ${message}`);
+    });
+
+    return () => {
+      cancelled = true;
+      stopDevCamera();
+    };
   }, []);
 
   // Warm Ghost Runner's game assets into the browser HTTP cache at boot so the

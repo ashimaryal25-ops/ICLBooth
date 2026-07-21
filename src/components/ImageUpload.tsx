@@ -15,21 +15,20 @@ interface ImageUploadProps {
 
 export function ImageUpload({ photo, onUpload, onChooseAnother, onViewSample, samplePhoto }: ImageUploadProps) {
   const [countdown, setCountdown] = useState<number | null>(null);
-  const [mirrorReady, setMirrorReady] = useState(false);
   const { sendToMirror, requestMirrorPhoto } = useMirrorRelay();
 
   const startCamera = useCallback(() => {
+    // Optimistic, like the collage flow: enable capture immediately instead of waiting
+    // for a `mirror-ready` handshake. That event is easy to miss (the relay can rotate
+    // or dedupe it out, or it arrives after a fixed timeout), which left the button
+    // stuck disabled. If the mirror really isn't there, the capture-request times out
+    // and surfaces the error at capture time — same as the collage.
     if (isDevCamera()) {
-      setMirrorReady(true);
       return;
     }
 
-    setMirrorReady(false);
     sendToMirror({ type: "mirror-start" });
     sendToMirror({ type: "mirror-ping" });
-    // Give the mirror window a moment to open the camera before offering the
-    // shutter, so a tap can't land while it is still warming up.
-    window.setTimeout(() => setMirrorReady(true), 1500);
   }, [sendToMirror]);
 
   useEffect(() => {
@@ -116,11 +115,11 @@ export function ImageUpload({ photo, onUpload, onChooseAnother, onViewSample, sa
       <button
         type="button"
         onClick={() => setCountdown(3)}
-        disabled={countdown !== null || !mirrorReady}
+        disabled={countdown !== null}
         className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-[#c25a1f] text-base font-bold text-white shadow-[0_3px_12px_rgba(112,54,0,0.24)] transition hover:bg-[#a84c17] disabled:cursor-not-allowed disabled:opacity-50"
       >
         <Camera size={20} />
-        {countdown !== null ? "Ready..." : mirrorReady ? "Take Picture" : "Starting camera..."}
+        {countdown !== null ? "Ready..." : "Take Picture"}
       </button>
 
       <div className="grid grid-cols-2 gap-2.5">
