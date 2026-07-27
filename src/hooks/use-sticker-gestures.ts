@@ -8,6 +8,7 @@ import { useRef } from "react";
 import type { Dispatch, PointerEvent as ReactPointerEvent, RefObject, SetStateAction } from "react";
 import {
   EMOJI_STICKER_SIZE,
+  IMAGE_STICKER_SIZE,
   STRIP_H,
   STRIP_W,
 } from "@/lib/photo-collage/constants";
@@ -150,9 +151,13 @@ export function useStickerGestures({
     }
   };
 
-  const startPaletteDrag = (emoji: string, e: ReactPointerEvent<HTMLButtonElement>) => {
+  const startPaletteDrag = (
+    emoji: string,
+    src: string | undefined,
+    e: ReactPointerEvent<HTMLButtonElement>,
+  ) => {
     e.preventDefault();
-    const nextDrag = { emoji, x: e.clientX, y: e.clientY };
+    const nextDrag = { emoji, src, x: e.clientX, y: e.clientY };
     paletteDragRef.current = nextDrag;
     setPaletteDrag(nextDrag);
     e.currentTarget.setPointerCapture(e.pointerId);
@@ -188,7 +193,7 @@ export function useStickerGestures({
 
     if (!droppedOnStrip) return;
 
-    const size = EMOJI_STICKER_SIZE;
+    const size = activeDrag.src ? IMAGE_STICKER_SIZE : EMOJI_STICKER_SIZE;
     const x = ((e.clientX - box.left) / box.width) * STRIP_W;
     const y = ((e.clientY - box.top) / box.height) * STRIP_H;
     setStickers((previous) => [
@@ -196,6 +201,7 @@ export function useStickerGestures({
       {
         id: Date.now() + Math.random(),
         emoji: activeDrag.emoji,
+        src: activeDrag.src,
         x: Math.min(STRIP_W - size / 2, Math.max(size / 2, x)),
         y: Math.min(STRIP_H - size / 2, Math.max(size / 2, y)),
         size,

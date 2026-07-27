@@ -43,6 +43,20 @@ export const FILTERS: { key: FilterName; label: string }[] = [
 
 export const STICKER_EMOJIS = ["❤️", "⭐", "✨", "🎀", "🕶️", "👑", "🐈", "🍒"];
 
+// Gettysburg / ICL PNG stickers (transparent). Dragged onto the strip like the
+// emoji, but drawn from preloaded images. Files live in public/stickers.
+export const IMAGE_STICKERS: { src: string; label: string }[] = [
+  { src: "/stickers/gburg-primary-logo.png", label: "Gettysburg College logo" },
+  { src: "/stickers/gburg-g-logo.png", label: "Gettysburg G logo" },
+  { src: "/stickers/bullet-mascot.png", label: "Bullets mascot" },
+  { src: "/stickers/gburg-college.png", label: "Gettysburg College" },
+  { src: "/stickers/gburg-pennant.png", label: "Gettysburg pennant" },
+  { src: "/stickers/gburg-cookie.png", label: "Gettysburg cookie" },
+  { src: "/stickers/do-great-work-glasses.png", label: "Do great work glasses" },
+  { src: "/stickers/icl-logo-sticker.png", label: "ICL logo" },
+];
+// Image stickers drop bigger than emoji so logos stay legible.
+export const IMAGE_STICKER_SIZE = 150;
 export const EMOJI_STICKER_SIZE = 84;
 
 export const LAYOUT_OPTIONS = [

@@ -4,6 +4,7 @@ import type { Dispatch, PointerEvent as ReactPointerEvent, RefObject, SetStateAc
 import {
   ACCENT,
   FILTERS,
+  IMAGE_STICKERS,
   PRESET_COLORS,
   STICKER_EMOJIS,
   STRIP_H,
@@ -12,6 +13,7 @@ import {
   glassBtn,
   heading,
 } from "@/lib/photo-collage/constants";
+import type { FrameTheme } from "@/data/frame-themes";
 import type { FilterName, PaletteDrag, Sticker } from "@/lib/photo-collage/types";
 
 type DecorViewProps = {
@@ -21,12 +23,22 @@ type DecorViewProps = {
   setFilter: Dispatch<SetStateAction<FilterName>>;
   stickers: Sticker[];
   setStickers: Dispatch<SetStateAction<Sticker[]>>;
+  setFrameKey: Dispatch<SetStateAction<string | null>>;
+  framePage: number;
+  setFramePage: Dispatch<SetStateAction<number>>;
+  framePageCount: number;
+  visibleFrames: FrameTheme[];
+  activeFrame: FrameTheme | undefined;
   paletteDrag: PaletteDrag | null;
   decorCanvasRef: RefObject<HTMLCanvasElement | null>;
   onCanvasPointerDown: (e: ReactPointerEvent<HTMLCanvasElement>) => void;
   onCanvasPointerMove: (e: ReactPointerEvent<HTMLCanvasElement>) => void;
   onCanvasPointerUp: (e: ReactPointerEvent<HTMLCanvasElement>) => void;
-  onPalettePointerDown: (emoji: string, e: ReactPointerEvent<HTMLButtonElement>) => void;
+  onPalettePointerDown: (
+    emoji: string,
+    src: string | undefined,
+    e: ReactPointerEvent<HTMLButtonElement>,
+  ) => void;
   onPalettePointerMove: (e: ReactPointerEvent<HTMLButtonElement>) => void;
   onPalettePointerUp: (e: ReactPointerEvent<HTMLButtonElement>) => void;
   /** Back to the camera for a fresh set of shots. */
@@ -43,6 +55,12 @@ export function DecorView({
   setFilter,
   stickers,
   setStickers,
+  setFrameKey,
+  framePage,
+  setFramePage,
+  framePageCount,
+  visibleFrames,
+  activeFrame,
   paletteDrag,
   decorCanvasRef,
   onCanvasPointerDown,
@@ -74,16 +92,68 @@ export function DecorView({
 
       <div className="flex min-h-0 flex-col gap-7 overflow-y-auto">
         <div>
+          <h3 className={heading}>Frame</h3>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setFrameKey(null)}
+              aria-pressed={!activeFrame}
+              className={`${glassBtn} ${!activeFrame ? "bg-white/45" : ""}`}
+            >
+              Plain
+            </button>
+            {visibleFrames.map((frame) => (
+              <button
+                key={frame.key}
+                type="button"
+                onClick={() => setFrameKey(frame.key)}
+                aria-pressed={activeFrame?.key === frame.key}
+                className={`${glassBtn} ${activeFrame?.key === frame.key ? "bg-white/45" : ""}`}
+              >
+                {frame.label}
+              </button>
+            ))}
+          </div>
+          {framePageCount > 1 && (
+            <div className="mt-2 flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => setFramePage((p) => (p - 1 + framePageCount) % framePageCount)}
+                aria-label="Previous frames"
+                className={glassBtn}
+              >
+                ‹
+              </button>
+              <span className="text-[11px] font-bold text-white/70">
+                {framePage + 1} / {framePageCount}
+              </span>
+              <button
+                type="button"
+                onClick={() => setFramePage((p) => (p + 1) % framePageCount)}
+                aria-label="More frames"
+                className={glassBtn}
+              >
+                ›
+              </button>
+            </div>
+          )}
+        </div>
+
+        <div>
           <h3 className={heading}>Strip Colour</h3>
+          <p className="mb-2.5 text-[11px] font-bold text-white/70">
+            {activeFrame ? "Frames bring their own background." : "Sets the strip background."}
+          </p>
           <div className="flex flex-wrap gap-2.5">
             {PRESET_COLORS.map((color) => (
               <button
                 key={color}
                 type="button"
                 onClick={() => setBgColor(color)}
+                disabled={Boolean(activeFrame)}
                 aria-label={`Strip colour ${color}`}
                 aria-pressed={bgColor === color}
-                className={`h-11 w-11 rounded-full border-[3px] transition-transform active:scale-95 ${
+                className={`h-11 w-11 rounded-full border-[3px] transition-transform active:scale-95 disabled:opacity-40 ${
                   bgColor === color ? "border-white scale-110" : "border-white/40"
                 }`}
                 style={{ backgroundColor: color }}
@@ -119,7 +189,7 @@ export function DecorView({
               <button
                 key={emoji}
                 type="button"
-                onPointerDown={(e) => onPalettePointerDown(emoji, e)}
+                onPointerDown={(e) => onPalettePointerDown(emoji, undefined, e)}
                 onPointerMove={onPalettePointerMove}
                 onPointerUp={onPalettePointerUp}
                 onPointerCancel={onPalettePointerUp}
@@ -127,6 +197,23 @@ export function DecorView({
                 className="h-12 w-12 touch-none rounded-[12px] border border-white/60 bg-white/25 text-2xl leading-none transition-all hover:bg-white/40 active:scale-95"
               >
                 {emoji}
+              </button>
+            ))}
+          </div>
+          <div className="mt-2 flex flex-wrap gap-2">
+            {IMAGE_STICKERS.map(({ src, label }) => (
+              <button
+                key={src}
+                type="button"
+                onPointerDown={(e) => onPalettePointerDown(label, src, e)}
+                onPointerMove={onPalettePointerMove}
+                onPointerUp={onPalettePointerUp}
+                onPointerCancel={onPalettePointerUp}
+                aria-label={label}
+                className="h-14 w-14 touch-none rounded-[12px] border border-white/60 bg-white/25 p-1.5 transition-all hover:bg-white/40 active:scale-95"
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={src} alt="" className="h-full w-full object-contain" />
               </button>
             ))}
           </div>
@@ -157,7 +244,12 @@ export function DecorView({
           className="pointer-events-none fixed z-50 -translate-x-1/2 -translate-y-1/2 text-5xl"
           style={{ left: paletteDrag.x, top: paletteDrag.y }}
         >
-          {paletteDrag.emoji}
+          {paletteDrag.src ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={paletteDrag.src} alt="" className="h-20 w-20 object-contain" />
+          ) : (
+            paletteDrag.emoji
+          )}
         </span>
       )}
     </section>

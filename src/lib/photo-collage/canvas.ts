@@ -1,12 +1,15 @@
-// Canvas helpers for the photo-strip flow: filters and layout maths, shared by
-// the on-screen strip and the capture preview.
+// Canvas helpers for the photo-strip flow: cropping, filters, and compositing,
+// shared by the on-screen strip and the print sheets.
 
 import type { FilterName, Sticker } from "./types";
+import type { FrameBleed, FrameSlot } from "@/data/frame-themes";
 import {
+  CROP_ZOOM,
   STRIP_FOOTER_H,
   STRIP_GAP,
   STRIP_H,
   STRIP_TOP_MARGIN,
+  VERTICAL_CROP_BIAS,
 } from "./constants";
 
 /** Photo height for a given slot count under the shared layout band. */
@@ -16,17 +19,97 @@ export function slotPhotoHeight(slotCount: number): number {
 }
 
 /**
+ * Cover-crop `src` to `cropAspect`, mirror it (like a real booth), apply the
+ * filter, and draw into `dest`. Same zoom + downward bias as the on-screen
+ * strip (see renderBase in PhotoCollage).
+ *
+ * `cropAspect` is separate from dest's aspect on purpose, so a photo can be
+ * cropped to one shape and drawn into a slot of another.
+ */
+export function drawPhotoInto(
+  ctx: CanvasRenderingContext2D,
+  src: CanvasImageSource & { width: number; height: number },
+  dest: FrameSlot,
+  cropAspect: number,
+  filterName: FilterName,
+) {
+  let sw = src.width;
+  let sh = src.width / cropAspect;
+  if (sh > src.height) {
+    sh = src.height;
+    sw = src.height * cropAspect;
+  }
+  sw /= CROP_ZOOM;
+  sh /= CROP_ZOOM;
+  const sx = (src.width - sw) / 2;
+  const sy = (src.height - sh) * VERTICAL_CROP_BIAS;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(dest.x, dest.y, dest.w, dest.h);
+  ctx.clip();
+  ctx.filter = canvasFilter(filterName);
+  ctx.translate(dest.x + dest.w, dest.y);
+  ctx.scale(-1, 1);
+  ctx.drawImage(src, sx, sy, sw, sh, 0, 0, dest.w, dest.h);
+  ctx.restore();
+}
+
+/**
+ * Stretch the artwork's outermost row/column of pixels into its transparent
+ * edge bands, so the frame never leaves a white sliver at the edges.
+ */
+export function paintFrameBleed(
+  ctx: CanvasRenderingContext2D,
+  art: HTMLImageElement,
+  bleed: FrameBleed,
+  destW: number,
+  destH: number,
+) {
+  const sx = art.naturalWidth / destW;
+  const sy = art.naturalHeight / destH;
+  const { top, bottom, left, right } = bleed;
+  if (top > 0) {
+    ctx.drawImage(art, 0, top * sy, art.naturalWidth, 1, 0, 0, destW, top);
+  }
+  if (bottom > 0) {
+    const srcY = art.naturalHeight - bottom * sy - 1;
+    ctx.drawImage(art, 0, srcY, art.naturalWidth, 1, 0, destH - bottom, destW, bottom);
+  }
+  if (left > 0) {
+    ctx.drawImage(art, left * sx, 0, 1, art.naturalHeight, 0, 0, left, destH);
+  }
+  if (right > 0) {
+    const srcX = art.naturalWidth - right * sx - 1;
+    ctx.drawImage(art, srcX, 0, 1, art.naturalHeight, destW - right, 0, right, destH);
+  }
+}
+
+/**
  * Stickers are placed in STRIP_W x STRIP_H space; `scale`/`offsetX` map them
  * onto a print sheet half.
  */
 export function drawStickers(
   ctx: CanvasRenderingContext2D,
   stickers: Sticker[],
+  images: Map<string, HTMLImageElement>,
   scale = 1,
   offsetX = 0,
 ) {
   ctx.save();
   stickers.forEach((s) => {
+    if (s.src) {
+      // Image sticker: fit inside a `size`x`size` box preserving aspect ratio,
+      // centred on (x, y). Skipped if the PNG hasn't finished preloading.
+      const img = images.get(s.src);
+      if (!img || !img.complete || !img.naturalWidth) return;
+      const box = s.size * scale;
+      const ar = img.naturalWidth / img.naturalHeight;
+      const w = ar >= 1 ? box : box * ar;
+      const h = ar >= 1 ? box / ar : box;
+      ctx.drawImage(img, offsetX + s.x * scale - w / 2, s.y * scale - h / 2, w, h);
+      return;
+    }
     ctx.font = `${s.size * scale}px Arial`;
     ctx.textBaseline = "middle";
     ctx.textAlign = "center";

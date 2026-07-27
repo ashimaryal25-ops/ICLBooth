@@ -1,0 +1,1454 @@
+[
+  {
+    "key": "animal",
+    "label": "Animals",
+    "photoCount": 3,
+    "single": {
+      "src": "/frames/single/animal pic3.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 71,
+          "y": 94,
+          "w": 470,
+          "h": 410
+        },
+        {
+          "x": 54,
+          "y": 578,
+          "w": 513,
+          "h": 431
+        },
+        {
+          "x": 34,
+          "y": 1096,
+          "w": 538,
+          "h": 457
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "animal",
+    "label": "Animals",
+    "photoCount": 4,
+    "single": {
+      "src": "/frames/single/animal pic 4.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 78,
+          "y": 45,
+          "w": 456,
+          "h": 338
+        },
+        {
+          "x": 63,
+          "y": 451,
+          "w": 493,
+          "h": 331
+        },
+        {
+          "x": 33,
+          "y": 825,
+          "w": 520,
+          "h": 339
+        },
+        {
+          "x": 51,
+          "y": 1204,
+          "w": 506,
+          "h": 347
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "apple",
+    "label": "Apple",
+    "photoCount": 2,
+    "single": {
+      "src": "/frames/single/apple sale pic2.png",
+      "w": 600,
+      "h": 1800,
+      "slots": [
+        {
+          "x": 55,
+          "y": 68,
+          "w": 494,
+          "h": 659
+        },
+        {
+          "x": 63,
+          "y": 836,
+          "w": 496,
+          "h": 667
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "apple",
+    "label": "Apple",
+    "photoCount": 3,
+    "single": {
+      "src": "/frames/single/apple pic3.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 60,
+          "y": 56,
+          "w": 496,
+          "h": 416
+        },
+        {
+          "x": 61,
+          "y": 566,
+          "w": 496,
+          "h": 420
+        },
+        {
+          "x": 49,
+          "y": 1060,
+          "w": 513,
+          "h": 457
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "apple",
+    "label": "Apple",
+    "photoCount": 4,
+    "single": {
+      "src": "/frames/single/apple sale pic 4.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 44,
+          "y": 75,
+          "w": 496,
+          "h": 299
+        },
+        {
+          "x": 50,
+          "y": 440,
+          "w": 496,
+          "h": 315
+        },
+        {
+          "x": 53,
+          "y": 824,
+          "w": 500,
+          "h": 334
+        },
+        {
+          "x": 55,
+          "y": 1231,
+          "w": 497,
+          "h": 299
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "basketball",
+    "label": "Basketball",
+    "photoCount": 2,
+    "single": {
+      "src": "/frames/single/Basketball pic2.png",
+      "w": 600,
+      "h": 1800,
+      "slots": [
+        {
+          "x": 39,
+          "y": 43,
+          "w": 522,
+          "h": 723
+        },
+        {
+          "x": 39,
+          "y": 816,
+          "w": 522,
+          "h": 723
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "basketball",
+    "label": "Basketball",
+    "photoCount": 3,
+    "single": {
+      "src": "/frames/single/basketball pic3.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 40,
+          "y": 35,
+          "w": 532,
+          "h": 475
+        },
+        {
+          "x": 40,
+          "y": 550,
+          "w": 532,
+          "h": 475
+        },
+        {
+          "x": 40,
+          "y": 1065,
+          "w": 532,
+          "h": 475
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "basketball",
+    "label": "Basketball",
+    "photoCount": 4,
+    "single": {
+      "src": "/frames/single/basketball pic 4.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 40,
+          "y": 46,
+          "w": 532,
+          "h": 346
+        },
+        {
+          "x": 40,
+          "y": 432,
+          "w": 532,
+          "h": 346
+        },
+        {
+          "x": 40,
+          "y": 818,
+          "w": 532,
+          "h": 346
+        },
+        {
+          "x": 40,
+          "y": 1204,
+          "w": 532,
+          "h": 346
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "brit",
+    "label": "Pattern",
+    "photoCount": 2,
+    "single": {
+      "src": "/frames/single/Britan pattern2.png",
+      "w": 600,
+      "h": 1800,
+      "slots": [
+        {
+          "x": 38,
+          "y": 37,
+          "w": 532,
+          "h": 735
+        },
+        {
+          "x": 38,
+          "y": 811,
+          "w": 536,
+          "h": 737
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "brit",
+    "label": "Pattern",
+    "photoCount": 3,
+    "single": {
+      "src": "/frames/single/brittan pattern 3.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 40,
+          "y": 35,
+          "w": 532,
+          "h": 475
+        },
+        {
+          "x": 40,
+          "y": 550,
+          "w": 532,
+          "h": 475
+        },
+        {
+          "x": 40,
+          "y": 1065,
+          "w": 532,
+          "h": 475
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "brit",
+    "label": "Pattern",
+    "photoCount": 4,
+    "single": {
+      "src": "/frames/single/brittan pic4.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 40,
+          "y": 46,
+          "w": 532,
+          "h": 346
+        },
+        {
+          "x": 40,
+          "y": 432,
+          "w": 532,
+          "h": 346
+        },
+        {
+          "x": 40,
+          "y": 818,
+          "w": 532,
+          "h": 346
+        },
+        {
+          "x": 40,
+          "y": 1204,
+          "w": 532,
+          "h": 346
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "circuit",
+    "label": "Circuit",
+    "photoCount": 2,
+    "single": {
+      "src": "/frames/single/circuit2.png",
+      "w": 600,
+      "h": 1800,
+      "slots": [
+        {
+          "x": 30,
+          "y": 26,
+          "w": 540,
+          "h": 753
+        },
+        {
+          "x": 30,
+          "y": 803,
+          "w": 552,
+          "h": 753
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "circuit",
+    "label": "Circuit",
+    "photoCount": 3,
+    "single": {
+      "src": "/frames/single/circuit pic 3.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 30,
+          "y": 19,
+          "w": 552,
+          "h": 495
+        },
+        {
+          "x": 30,
+          "y": 534,
+          "w": 552,
+          "h": 495
+        },
+        {
+          "x": 30,
+          "y": 1049,
+          "w": 552,
+          "h": 495
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "circuit",
+    "label": "Circuit",
+    "photoCount": 4,
+    "single": {
+      "src": "/frames/single/circuit pic4.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 30,
+          "y": 36,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 422,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 808,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 1194,
+          "w": 552,
+          "h": 366
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "doodle",
+    "label": "Doodles",
+    "photoCount": 2,
+    "single": {
+      "src": "/frames/single/cute doodle pic2.png",
+      "w": 600,
+      "h": 1800,
+      "slots": [
+        {
+          "x": 30,
+          "y": 27,
+          "w": 540,
+          "h": 751
+        },
+        {
+          "x": 31,
+          "y": 804,
+          "w": 550,
+          "h": 751
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "doodle",
+    "label": "Doodles",
+    "photoCount": 3,
+    "single": {
+      "src": "/frames/single/cute doodle pic3.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 33,
+          "y": 35,
+          "w": 546,
+          "h": 488
+        },
+        {
+          "x": 33,
+          "y": 550,
+          "w": 546,
+          "h": 489
+        },
+        {
+          "x": 33,
+          "y": 1065,
+          "w": 546,
+          "h": 489
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "doodle",
+    "label": "Doodles",
+    "photoCount": 4,
+    "single": {
+      "src": "/frames/single/cute doodle pic 4.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 33,
+          "y": 39,
+          "w": 546,
+          "h": 360
+        },
+        {
+          "x": 33,
+          "y": 425,
+          "w": 546,
+          "h": 360
+        },
+        {
+          "x": 33,
+          "y": 811,
+          "w": 546,
+          "h": 360
+        },
+        {
+          "x": 33,
+          "y": 1197,
+          "w": 546,
+          "h": 360
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "football",
+    "label": "Football",
+    "photoCount": 2,
+    "single": {
+      "src": "/frames/single/football pic2.png",
+      "w": 600,
+      "h": 1800,
+      "slots": [
+        {
+          "x": 30,
+          "y": 26,
+          "w": 540,
+          "h": 753
+        },
+        {
+          "x": 30,
+          "y": 803,
+          "w": 552,
+          "h": 753
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "football",
+    "label": "Football",
+    "photoCount": 3,
+    "single": {
+      "src": "/frames/single/football pic3.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 30,
+          "y": 19,
+          "w": 552,
+          "h": 495
+        },
+        {
+          "x": 30,
+          "y": 534,
+          "w": 552,
+          "h": 495
+        },
+        {
+          "x": 30,
+          "y": 1049,
+          "w": 552,
+          "h": 495
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "football",
+    "label": "Football",
+    "photoCount": 4,
+    "single": {
+      "src": "/frames/single/football pic4.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 30,
+          "y": 36,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 422,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 808,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 1194,
+          "w": 552,
+          "h": 366
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "lacrosse",
+    "label": "Lacrosse",
+    "photoCount": 2,
+    "single": {
+      "src": "/frames/single/lacrosse pic2.png",
+      "w": 600,
+      "h": 1800,
+      "slots": [
+        {
+          "x": 32,
+          "y": 36,
+          "w": 538,
+          "h": 743
+        },
+        {
+          "x": 32,
+          "y": 803,
+          "w": 539,
+          "h": 744
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "lacrosse",
+    "label": "Lacrosse",
+    "photoCount": 3,
+    "single": {
+      "src": "/frames/single/lacrosse pic3.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 30,
+          "y": 32,
+          "w": 552,
+          "h": 495
+        },
+        {
+          "x": 30,
+          "y": 547,
+          "w": 552,
+          "h": 495
+        },
+        {
+          "x": 30,
+          "y": 1062,
+          "w": 552,
+          "h": 495
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "lacrosse",
+    "label": "Lacrosse",
+    "photoCount": 4,
+    "single": {
+      "src": "/frames/single/lacrosse pic 4.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 30,
+          "y": 36,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 422,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 808,
+          "w": 526,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 1194,
+          "w": 552,
+          "h": 366
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "penhall",
+    "label": "Penn Hall",
+    "photoCount": 2,
+    "single": {
+      "src": "/frames/single/penhall pic2.png",
+      "w": 600,
+      "h": 1800,
+      "slots": [
+        {
+          "x": 30,
+          "y": 26,
+          "w": 540,
+          "h": 753
+        },
+        {
+          "x": 30,
+          "y": 803,
+          "w": 552,
+          "h": 753
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "penhall",
+    "label": "Penn Hall",
+    "photoCount": 3,
+    "single": {
+      "src": "/frames/single/pen hall 3 pic.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 30,
+          "y": 32,
+          "w": 552,
+          "h": 495
+        },
+        {
+          "x": 30,
+          "y": 547,
+          "w": 552,
+          "h": 495
+        },
+        {
+          "x": 30,
+          "y": 1062,
+          "w": 552,
+          "h": 495
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "penhall",
+    "label": "Penn Hall",
+    "photoCount": 4,
+    "single": {
+      "src": "/frames/single/pen hall pic 4.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 30,
+          "y": 36,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 422,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 808,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 1194,
+          "w": 552,
+          "h": 366
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "picnic",
+    "label": "Picnic",
+    "photoCount": 2,
+    "single": {
+      "src": "/frames/single/Picnic2.png",
+      "w": 600,
+      "h": 1800,
+      "slots": [
+        {
+          "x": 30,
+          "y": 26,
+          "w": 540,
+          "h": 753
+        },
+        {
+          "x": 30,
+          "y": 803,
+          "w": 552,
+          "h": 753
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "picnic",
+    "label": "Picnic",
+    "photoCount": 3,
+    "single": {
+      "src": "/frames/single/picnic 3 strip.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 30,
+          "y": 19,
+          "w": 552,
+          "h": 495
+        },
+        {
+          "x": 30,
+          "y": 534,
+          "w": 552,
+          "h": 495
+        },
+        {
+          "x": 30,
+          "y": 1049,
+          "w": 552,
+          "h": 495
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "picnic",
+    "label": "Picnic",
+    "photoCount": 4,
+    "single": {
+      "src": "/frames/single/picnic4pic.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 30,
+          "y": 36,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 422,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 808,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 1194,
+          "w": 552,
+          "h": 366
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "polka",
+    "label": "Polka Dot",
+    "photoCount": 2,
+    "single": {
+      "src": "/frames/single/polkadot 2pic.png",
+      "w": 600,
+      "h": 1800,
+      "slots": [
+        {
+          "x": 43,
+          "y": 45,
+          "w": 526,
+          "h": 726
+        },
+        {
+          "x": 42,
+          "y": 816,
+          "w": 528,
+          "h": 729
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "polka",
+    "label": "Polka Dot",
+    "photoCount": 3,
+    "single": {
+      "src": "/frames/single/polka dot pic3.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 43,
+          "y": 41,
+          "w": 527,
+          "h": 474
+        },
+        {
+          "x": 40,
+          "y": 557,
+          "w": 532,
+          "h": 475
+        },
+        {
+          "x": 41,
+          "y": 1074,
+          "w": 529,
+          "h": 472
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "polka",
+    "label": "Polka Dot",
+    "photoCount": 4,
+    "single": {
+      "src": "/frames/single/polka dot4.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 39,
+          "y": 38,
+          "w": 533,
+          "h": 352
+        },
+        {
+          "x": 37,
+          "y": 428,
+          "w": 536,
+          "h": 351
+        },
+        {
+          "x": 33,
+          "y": 818,
+          "w": 544,
+          "h": 359
+        },
+        {
+          "x": 36,
+          "y": 1208,
+          "w": 537,
+          "h": 350
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "soccer",
+    "label": "Soccer",
+    "photoCount": 2,
+    "single": {
+      "src": "/frames/single/soccer 2pic.png",
+      "w": 600,
+      "h": 1800,
+      "slots": [
+        {
+          "x": 35,
+          "y": 26,
+          "w": 530,
+          "h": 742
+        },
+        {
+          "x": 35,
+          "y": 803,
+          "w": 542,
+          "h": 740
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "soccer",
+    "label": "Soccer",
+    "photoCount": 3,
+    "single": {
+      "src": "/frames/single/soccer pic3.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 42,
+          "y": 39,
+          "w": 532,
+          "h": 476
+        },
+        {
+          "x": 42,
+          "y": 555,
+          "w": 532,
+          "h": 476
+        },
+        {
+          "x": 42,
+          "y": 1072,
+          "w": 532,
+          "h": 476
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 1,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "soccer",
+    "label": "Soccer",
+    "photoCount": 4,
+    "single": {
+      "src": "/frames/single/soccer pic 4.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 40,
+          "y": 46,
+          "w": 532,
+          "h": 346
+        },
+        {
+          "x": 40,
+          "y": 432,
+          "w": 532,
+          "h": 346
+        },
+        {
+          "x": 40,
+          "y": 818,
+          "w": 532,
+          "h": 346
+        },
+        {
+          "x": 40,
+          "y": 1204,
+          "w": 532,
+          "h": 346
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "tech",
+    "label": "Tech",
+    "photoCount": 2,
+    "single": {
+      "src": "/frames/single/tech2.png",
+      "w": 600,
+      "h": 1800,
+      "slots": [
+        {
+          "x": 30,
+          "y": 26,
+          "w": 540,
+          "h": 753
+        },
+        {
+          "x": 30,
+          "y": 803,
+          "w": 552,
+          "h": 753
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "tech",
+    "label": "Tech",
+    "photoCount": 3,
+    "single": {
+      "src": "/frames/single/tech pic3.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 30,
+          "y": 32,
+          "w": 552,
+          "h": 495
+        },
+        {
+          "x": 30,
+          "y": 547,
+          "w": 552,
+          "h": 495
+        },
+        {
+          "x": 30,
+          "y": 1062,
+          "w": 552,
+          "h": 495
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "tech",
+    "label": "Tech",
+    "photoCount": 4,
+    "single": {
+      "src": "/frames/single/tech pic4.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 30,
+          "y": 36,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 422,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 808,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 1194,
+          "w": 552,
+          "h": 366
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "window",
+    "label": "Windows",
+    "photoCount": 3,
+    "single": {
+      "src": "/frames/single/window pic3.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 30,
+          "y": 32,
+          "w": 552,
+          "h": 495
+        },
+        {
+          "x": 30,
+          "y": 547,
+          "w": 552,
+          "h": 495
+        },
+        {
+          "x": 30,
+          "y": 1062,
+          "w": 552,
+          "h": 495
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  },
+  {
+    "key": "window",
+    "label": "Windows",
+    "photoCount": 4,
+    "single": {
+      "src": "/frames/single/window pic 4.png",
+      "w": 612,
+      "h": 1804,
+      "slots": [
+        {
+          "x": 30,
+          "y": 36,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 422,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 808,
+          "w": 552,
+          "h": 366
+        },
+        {
+          "x": 30,
+          "y": 1194,
+          "w": 552,
+          "h": 366
+        }
+      ],
+      "bleed": {
+        "top": 0,
+        "bottom": 0,
+        "left": 0,
+        "right": 0
+      }
+    }
+  }
+]

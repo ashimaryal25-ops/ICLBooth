@@ -8,11 +8,13 @@
  * live in ./photo-collage, helpers in lib/photo-collage.
  */
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
+import { findFrame, framesForCount } from "@/data/frame-themes";
 import {
   CROP_ZOOM,
   DEFAULT_STRIP_COLOR,
+  IMAGE_STICKERS,
   SKY,
   STRIP_GAP,
   STRIP_H,
@@ -22,7 +24,16 @@ import {
   STRIP_W,
   VERTICAL_CROP_BIAS,
 } from "@/lib/photo-collage/constants";
-import { canvasFilter, composePlainPrintSheet, drawStickers, slotPhotoHeight, sleep } from "@/lib/photo-collage/canvas";
+import {
+  canvasFilter,
+  composePlainPrintSheet,
+  drawPhotoInto,
+  drawStickers,
+  loadImage,
+  paintFrameBleed,
+  slotPhotoHeight,
+  sleep,
+} from "@/lib/photo-collage/canvas";
 import type { CollageView, FilterName, PaletteDrag, PhotoCollageProps, Sticker } from "@/lib/photo-collage/types";
 import { useStickerGestures } from "@/hooks/use-sticker-gestures";
 import { useMirrorRelay } from "@/hooks/use-mirror-relay";
@@ -37,6 +48,11 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
   const [filter, setFilter] = useState<FilterName>("none");
   const [bgColor, setBgColor] = useState(DEFAULT_STRIP_COLOR);
   const [stickers, setStickers] = useState<Sticker[]>([]);
+  // null = the plain background-colour strip. Anything else is one of the
+  // custom frames; the two paths are independent all the way to the print sheet.
+  const [frameKey, setFrameKey] = useState<string | null>(null);
+  const [frameImg, setFrameImg] = useState<HTMLImageElement | null>(null);
+  const [framePage, setFramePage] = useState(0);
   const [paletteDrag, setPaletteDrag] = useState<PaletteDrag | null>(null);
 
   const [countdown, setCountdown] = useState<number | null>(null);
@@ -59,6 +75,9 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
   const renderRafRef = useRef<number | null>(null);
   const brandImgRef = useRef<HTMLImageElement | null>(null);
   const stripQrImgRef = useRef<HTMLImageElement | null>(null);
+  // PNG stickers preloaded, keyed by src for sync lookup in drawStickers.
+  const stickerImgsRef = useRef<Map<string, HTMLImageElement>>(new Map());
+  const [stickerImgsReady, setStickerImgsReady] = useState(false);
 
   // --- Camera relay ---------------------------------------------------------
   const { sendToMirror, stopCamera, requestMirrorPhoto } = useMirrorRelay();
@@ -89,6 +108,24 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
       .catch(() => {});
   }, []);
 
+  // Preload the PNG stickers once so drawStickers can blit them synchronously.
+  useEffect(() => {
+    let remaining = IMAGE_STICKERS.length;
+    const done = () => {
+      remaining -= 1;
+      if (remaining <= 0) setStickerImgsReady(true);
+    };
+    IMAGE_STICKERS.forEach(({ src }) => {
+      const img = new Image();
+      img.onload = () => {
+        stickerImgsRef.current.set(src, img);
+        done();
+      };
+      img.onerror = done;
+      img.src = src;
+    });
+  }, []);
+
   const resetShots = useCallback(() => {
     photosRef.current = [];
     setPreviews([]);
@@ -103,6 +140,8 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
     setStickers([]);
     setFilter("none");
     setBgColor(DEFAULT_STRIP_COLOR);
+    setFrameKey(null);
+    setFramePage(0);
     setView("camera");
   };
 
@@ -174,6 +213,36 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
     };
   }, [view, slots, retakeNonce, requestMirrorPhoto, sendToMirror]);
 
+  // --- Custom frames --------------------------------------------------------
+  // Not every frame has a version for every photo count. If the guest switches
+  // to a count this frame wasn't drawn for, fall back to the plain strip.
+  const availableFrames = useMemo(() => framesForCount(slots), [slots]);
+  const framePageCount = Math.max(1, Math.ceil(availableFrames.length / 5));
+  const visibleFrames = useMemo(
+    () => availableFrames.slice(framePage * 5, framePage * 5 + 5),
+    [availableFrames, framePage],
+  );
+  const activeFrame = useMemo(
+    () => (frameKey ? findFrame(frameKey, slots) : undefined),
+    [frameKey, slots],
+  );
+
+  // Preload the on-screen frame art; the strip re-renders once it is decoded.
+  useEffect(() => {
+    if (!activeFrame) return;
+    let cancelled = false;
+    loadImage(activeFrame.single.src)
+      .then((img) => {
+        if (!cancelled) setFrameImg(img);
+      })
+      .catch(() => {
+        if (!cancelled) setFrameImg(null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [activeFrame]);
+
   // --- Strip rendering (direct port of renderPhotoStripCanvas) --------------
   // Paint everything under the stickers into the offscreen base. Heavy pass,
   // split from the cheap sticker composite so drags stay smooth.
@@ -189,6 +258,34 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
     if (!ctx) return;
 
     const photos = photosRef.current;
+
+    // Custom frame: photos sit behind the art, showing through its transparent
+    // windows (plain-strip chrome below is skipped). The src check avoids drawing
+    // a half-loaded previous theme; decoded because filenames have spaces.
+    if (
+      activeFrame &&
+      frameImg &&
+      decodeURIComponent(frameImg.src).endsWith(activeFrame.single.src)
+    ) {
+      const fx = STRIP_W / activeFrame.single.w;
+      const fy = STRIP_H / activeFrame.single.h;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, STRIP_W, STRIP_H);
+      paintFrameBleed(ctx, frameImg, activeFrame.single.bleed, STRIP_W, STRIP_H);
+      activeFrame.single.slots.forEach((slot, i) => {
+        const src = photos[i];
+        if (!src) return;
+        drawPhotoInto(
+          ctx,
+          src,
+          { x: slot.x * fx, y: slot.y * fy, w: slot.w * fx, h: slot.h * fy },
+          slot.w / slot.h,
+          filter,
+        );
+      });
+      ctx.drawImage(frameImg, 0, 0, STRIP_W, STRIP_H);
+      return;
+    }
 
     ctx.fillStyle = bgColor;
     ctx.fillRect(0, 0, STRIP_W, STRIP_H);
@@ -252,7 +349,7 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
       const qrY = STRIP_H - 154;
       ctx.drawImage(stripQrImg, qrX, qrY, qrSize, qrSize);
     }
-  }, [bgColor, filter, brandReady, stripQrReady]);
+  }, [bgColor, filter, brandReady, stripQrReady, activeFrame, frameImg]);
 
   // Gesture refs are created here and passed into useStickerGestures, so the
   // React Compiler treats them as plain component refs.
@@ -277,7 +374,7 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
     ctx.drawImage(base, 0, 0);
-    drawStickers(ctx, stickersRef.current);
+    drawStickers(ctx, stickersRef.current, stickerImgsRef.current);
   }, []);
 
   /** Full repaint: rebuild the base, then composite. */
@@ -336,7 +433,7 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
   useEffect(() => {
     if (view !== "decor") return;
     composite();
-  }, [view, stickers, composite]);
+  }, [view, stickers, stickerImgsReady, composite]);
 
   // Drop any queued gesture frame when leaving Decorate.
   useEffect(() => {
@@ -418,6 +515,12 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
           setFilter={setFilter}
           stickers={stickers}
           setStickers={setStickers}
+          setFrameKey={setFrameKey}
+          framePage={framePage}
+          setFramePage={setFramePage}
+          framePageCount={framePageCount}
+          visibleFrames={visibleFrames}
+          activeFrame={activeFrame}
           paletteDrag={paletteDrag}
           decorCanvasRef={decorCanvasRef}
           onCanvasPointerDown={onPointerDown}
