@@ -2,13 +2,14 @@
 // shared by the on-screen strip and the print sheets.
 
 import type { FilterName, Sticker } from "./types";
-import type { FrameBleed, FrameSlot } from "@/data/frame-themes";
+import type { FrameBleed, FrameSlot, FrameTheme } from "@/data/frame-themes";
 import {
   CROP_ZOOM,
   STRIP_FOOTER_H,
   STRIP_GAP,
   STRIP_H,
   STRIP_TOP_MARGIN,
+  STRIP_W,
   VERTICAL_CROP_BIAS,
 } from "./constants";
 
@@ -23,8 +24,9 @@ export function slotPhotoHeight(slotCount: number): number {
  * filter, and draw into `dest`. Same zoom + downward bias as the on-screen
  * strip (see renderBase in PhotoCollage).
  *
- * `cropAspect` is separate from dest's aspect on purpose, so a photo can be
- * cropped to one shape and drawn into a slot of another.
+ * `cropAspect` is separate from dest's aspect on purpose: the custom-frame
+ * print slots are squeezed horizontally to cancel the printer's stretch, so we
+ * crop to the shape the guest saw, then stretch that into the slot.
  */
 export function drawPhotoInto(
   ctx: CanvasRenderingContext2D,
@@ -57,7 +59,8 @@ export function drawPhotoInto(
 
 /**
  * Stretch the artwork's outermost row/column of pixels into its transparent
- * edge bands, so the frame never leaves a white sliver at the edges.
+ * edge bands, so the white-sliver gaps where print sheets stop short of the
+ * paper edge (top ~20px; two ~50px on the right) stay covered.
  */
 export function paintFrameBleed(
   ctx: CanvasRenderingContext2D,
@@ -201,6 +204,64 @@ export async function composePlainPrintSheet(
 
   // Right strip (identical): INNER_MARGIN to the right of centre.
   ctx.drawImage(strip, halfW + INNER_MARGIN, yTop, stripTargetW, stripTargetH);
+
+  return sheet.toDataURL("image/png");
+}
+
+/**
+ * Custom-frame print path. `backendstrip/` sheets are already complete
+ * 1200x1800 files: both strips laid out, the pattern bled across the centre
+ * seam, and the printer's edge compensation baked into the artwork by hand
+ * (measured on real prints). So this bypasses composePlainPrintSheet — no
+ * background fill, no 542px rescale, no OUTER/INNER inset. All we add are the
+ * photos and the guest's stickers.
+ *
+ * The print slots are narrower than the on-screen ones — that squeeze is part
+ * of the compensation — so each photo is cropped to the on-screen shape, then
+ * stretched into the print slot.
+ */
+export async function composeFramePrintSheet(
+  frame: FrameTheme,
+  filter: FilterName,
+  stickers: Sticker[],
+  photos: HTMLCanvasElement[],
+  stickerImages: Map<string, HTMLImageElement>,
+): Promise<string | null> {
+  let art: HTMLImageElement;
+  try {
+    art = await loadImage(frame.print.src);
+  } catch {
+    return null;
+  }
+
+  const sheet = document.createElement("canvas");
+  sheet.width = frame.print.w;
+  sheet.height = frame.print.h;
+  const ctx = sheet.getContext("2d");
+  if (!ctx) return null;
+
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, sheet.width, sheet.height);
+  paintFrameBleed(ctx, art, frame.print.bleed, sheet.width, sheet.height);
+
+  const cropAspect = (i: number) => {
+    const s = frame.single.slots[i];
+    return s ? s.w / s.h : 1;
+  };
+  for (const side of ["left", "right"] as const) {
+    frame.print.slots[side].forEach((slot, i) => {
+      const src = photos[i];
+      if (src) drawPhotoInto(ctx, src, slot, cropAspect(i), filter);
+    });
+  }
+
+  ctx.drawImage(art, 0, 0, sheet.width, sheet.height);
+
+  // Stickers sit on top of the art, once per strip half.
+  const halfW = sheet.width / 2;
+  const scale = halfW / STRIP_W;
+  drawStickers(ctx, stickers, stickerImages, scale, 0);
+  drawStickers(ctx, stickers, stickerImages, scale, halfW);
 
   return sheet.toDataURL("image/png");
 }

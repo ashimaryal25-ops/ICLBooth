@@ -15,6 +15,13 @@ export type FrameTheme = {
   label: string;
   photoCount: number;
   single: { src: string; w: number; h: number; slots: FrameSlot[]; bleed: FrameBleed };
+  print: {
+    src: string;
+    w: number;
+    h: number;
+    slots: { left: FrameSlot[]; right: FrameSlot[] };
+    bleed: FrameBleed;
+  };
 };
 
 export const FRAME_THEMES: FrameTheme[] = frameThemes;

@@ -26,6 +26,7 @@ import {
 } from "@/lib/photo-collage/constants";
 import {
   canvasFilter,
+  composeFramePrintSheet,
   composePlainPrintSheet,
   drawPhotoInto,
   drawStickers,
@@ -466,7 +467,17 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
     setView("final");
 
     // The saved file is the two-up 4×6 sheet, so one print yields two strips.
-    const sheet = await composePlainPrintSheet(imageDataUrl, bgColor);
+    // Custom frames ship as ready-made sheets with the pattern already bled
+    // across the centre seam; the plain strip is composed here instead.
+    const sheet = activeFrame
+      ? await composeFramePrintSheet(
+          activeFrame,
+          filter,
+          stickersRef.current,
+          photosRef.current,
+          stickerImgsRef.current,
+        )
+      : await composePlainPrintSheet(imageDataUrl, bgColor);
     setPrintSheetUrl(sheet ?? imageDataUrl);
   };
 
