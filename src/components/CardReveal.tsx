@@ -5,27 +5,34 @@ import { useEffect, useRef, useState } from "react";
 import { CardPreview } from "@/components/CardPreview";
 import type { CardIdentity } from "@/lib/card-schema";
 import { renderCardAsPng } from "@/lib/export-card";
+import { saveLocalCardPrint } from "@/lib/save-local-card";
 
 interface CardRevealProps {
   card: CardIdentity;
+  cardId: string | null;
   photo: string;
   onRestart: () => void;
   onGoHome: () => void;
 }
 
-export function CardReveal({ card, photo, onRestart, onGoHome }: CardRevealProps) {
+type SaveStatus = "idle" | "saving" | "saved" | "error";
+
+export function CardReveal({ card, cardId, photo, onRestart, onGoHome }: CardRevealProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const renderedPngRef = useRef<string | null>(null);
   const hasPreparedRef = useRef(false);
   const [exportError, setExportError] = useState(false);
   const [isReady, setIsReady] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
 
-  // Render the PNG once, shortly after the card paints, so the download button
-  // responds instantly instead of rasterising on click.
+  // Render the PNG once, shortly after the card paints, then file it in the
+  // booth's local store so the kiosk keeps a copy of everything it produced.
   useEffect(() => {
     if (!cardRef.current || hasPreparedRef.current) {
       return;
     }
+
+    setSaveStatus(cardId ? "saving" : "idle");
 
     const timer = window.setTimeout(async () => {
       if (hasPreparedRef.current || !cardRef.current) {
@@ -35,15 +42,26 @@ export function CardReveal({ card, photo, onRestart, onGoHome }: CardRevealProps
       hasPreparedRef.current = true;
 
       try {
-        renderedPngRef.current = await renderCardAsPng(cardRef.current);
+        const imageDataUrl = await renderCardAsPng(cardRef.current);
+        renderedPngRef.current = imageDataUrl;
         setIsReady(true);
+
+        if (cardId) {
+          try {
+            await saveLocalCardPrint({ id: cardId, card, imageDataUrl });
+            setSaveStatus("saved");
+          } catch {
+            setSaveStatus("error");
+          }
+        }
       } catch {
+        setSaveStatus("error");
         setExportError(true);
       }
     }, 500);
 
     return () => window.clearTimeout(timer);
-  }, [card]);
+  }, [card, cardId]);
 
   function downloadCard() {
     const dataUrl = renderedPngRef.current;
@@ -101,6 +119,12 @@ export function CardReveal({ card, photo, onRestart, onGoHome }: CardRevealProps
           <RotateCcw size={32} strokeWidth={2.2} />
           <span className="w-full text-center leading-[1.1]">New Card</span>
         </button>
+
+        {saveStatus === "error" && !exportError && (
+          <p className="max-w-[280px] text-center text-sm font-bold text-[var(--gc-gray)]">
+            Saved to this screen only — the booth copy failed.
+          </p>
+        )}
 
         {exportError && (
           <p className="max-w-[280px] rounded-md bg-black/60 px-4 py-2 text-center text-sm font-bold text-[#ff9a9a]">

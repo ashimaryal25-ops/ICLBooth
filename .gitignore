@@ -25,3 +25,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local booth runtime data. The trailing glob matters: timestamped safety copies
+# (.booth-storage.bak-YYYYmmdd-HHMMSS) are NOT matched by ".booth-storage/" and
+# would otherwise be staged by "git add -A" - they hold guests' card photos.
+.booth-storage*

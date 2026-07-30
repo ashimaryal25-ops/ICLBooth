@@ -42,6 +42,7 @@ export function BoothApp() {
   const [step, setStep] = useState<Step>("choose");
   const [photo, setPhoto] = useState<string | null>(null);
   const [card, setCard] = useState<CardIdentity | null>(null);
+  const [cardId, setCardId] = useState<string | null>(null);
   const [isSampleCardOpen, setIsSampleCardOpen] = useState(false);
   const [isGameFullscreen, setIsGameFullscreen] = useState(false);
   const [gameSrc, setGameSrc] = useState(ATTRACT_SRC);
@@ -147,6 +148,7 @@ export function BoothApp() {
     setStep("cardSetup");
     setPhoto(null);
     setCard(null);
+    setCardId(null);
     setIsSampleCardOpen(false);
   }, []);
 
@@ -154,6 +156,7 @@ export function BoothApp() {
     setStep("choose");
     setPhoto(null);
     setCard(null);
+    setCardId(null);
     setIsSampleCardOpen(false);
   }, []);
 
@@ -169,6 +172,7 @@ export function BoothApp() {
       setStep("generating");
       const generated = await generateCardIdentity(request);
       setCard(generated.card);
+      setCardId(generated.cardId);
 
       const elapsed = performance.now() - startedAt;
       if (elapsed < 1200) {
@@ -348,6 +352,7 @@ export function BoothApp() {
         {step === "reveal" && card && photo && (
           <CardReveal
             card={card}
+            cardId={cardId}
             photo={photo}
             onRestart={resetCardFlow}
             onGoHome={resetToChooser}
