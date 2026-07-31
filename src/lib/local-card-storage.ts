@@ -1,17 +1,54 @@
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir, unlink, writeFile } from "fs/promises";
 import path from "path";
 import { formatKnownFor, type CardIdentity } from "@/lib/card-schema";
 import { decodePngDataUrl } from "@/lib/png-data-url";
-import { insertLocalCardRecord, type LocalCardRecord } from "@/lib/local-card-db";
+import {
+  deleteLocalCardRecords,
+  getOverflowLocalCardRecords,
+  insertLocalCardRecord,
+  type LocalCardRecord,
+} from "@/lib/local-card-db";
 
 const storageRoot = path.join(process.cwd(), ".booth-storage");
 const cardsDir = path.join(storageRoot, "cards");
 const cardLifetimeMs = 24 * 60 * 60 * 1000;
+const maxCachedCards = 100;
 
 function getTraitScores(card: CardIdentity) {
   return Object.fromEntries(
     Object.entries(card.stats).filter(([label]) => label !== "Campus Power"),
   );
+}
+
+async function enforceCardCacheLimit() {
+  const overflowRecords = getOverflowLocalCardRecords(maxCachedCards);
+  const deletedRecordIds: string[] = [];
+  const resolvedCardsDir = path.resolve(cardsDir) + path.sep;
+
+  for (const record of overflowRecords) {
+    const absolutePngPath = path.resolve(storageRoot, record.card_png_path);
+
+    if (!absolutePngPath.startsWith(resolvedCardsDir)) {
+      console.error("Refusing to delete a cached card outside the cards directory.", record.id);
+      continue;
+    }
+
+    try {
+      await unlink(absolutePngPath);
+      deletedRecordIds.push(record.id);
+    } catch (error) {
+      const isMissingFile =
+        error instanceof Error && "code" in error && error.code === "ENOENT";
+
+      if (isMissingFile) {
+        deletedRecordIds.push(record.id);
+      } else {
+        console.error("Could not delete an old cached card PNG.", record.id, error);
+      }
+    }
+  }
+
+  deleteLocalCardRecords(deletedRecordIds);
 }
 
 export async function saveLocalCard(params: {
@@ -40,11 +77,13 @@ export async function saveLocalCard(params: {
     specialAbility: params.card.specialAbility,
     cardPngPath,
     cardUrl: `/api/local-cards/${params.id}`,
+    printStatus: "not_requested",
     createdAt: createdAt.toISOString(),
     expiresAt: new Date(createdAt.getTime() + cardLifetimeMs).toISOString(),
   };
 
   insertLocalCardRecord(record);
+  await enforceCardCacheLimit();
 
   return record;
 }

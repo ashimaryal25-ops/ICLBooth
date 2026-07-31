@@ -11,6 +11,7 @@ const localCardRecordSchema = z.object({
   specialAbility: z.string(),
   cardPngPath: z.string(),
   cardUrl: z.string(),
+  printStatus: z.string(),
   createdAt: z.string(),
   expiresAt: z.string(),
 });
