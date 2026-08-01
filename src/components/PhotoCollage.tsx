@@ -63,7 +63,8 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
   const [cameraError, setCameraError] = useState<string | null>(null);
 
   const [stripDataUrl, setStripDataUrl] = useState("");
-  const [printSheetUrl, setPrintSheetUrl] = useState("");
+  const [printState, setPrintState] = useState<"idle" | "printing" | "sent">("idle");
+  const [printError, setPrintError] = useState<string | null>(null);
   const [brandReady, setBrandReady] = useState(false);
   const [stripQrReady, setStripQrReady] = useState(false);
 
@@ -446,7 +447,7 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
     };
   }, [view]);
 
-  const goFinal = async () => {
+  const goFinal = () => {
     const canvas = decorCanvasRef.current;
     if (!canvas) return;
 
@@ -465,20 +466,41 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
     setStripDataUrl(imageDataUrl);
     stopCamera();
     setView("final");
+  };
 
-    // The saved file is the two-up 4×6 sheet, so one print yields two strips.
-    // Custom frames ship as ready-made sheets with the pattern already bled
-    // across the centre seam; the plain strip is composed here instead.
-    const sheet = activeFrame
-      ? await composeFramePrintSheet(
-          activeFrame,
-          filter,
-          stickersRef.current,
-          photosRef.current,
-          stickerImgsRef.current,
-        )
-      : await composePlainPrintSheet(imageDataUrl, bgColor);
-    setPrintSheetUrl(sheet ?? imageDataUrl);
+  const handlePrint = async () => {
+    if (!stripDataUrl) return;
+    setPrintState("printing");
+    setPrintError(null);
+    try {
+      // Custom frames ship as ready-made 4×6 sheets; the plain-colour strip is
+      // composed here into the two-up sheet. Both composers live in
+      // src/lib/photo-collage/canvas.ts.
+      const printDataUrl =
+        (activeFrame
+          ? await composeFramePrintSheet(activeFrame, filter, stickers, photosRef.current, stickerImgsRef.current)
+          : await composePlainPrintSheet(stripDataUrl, bgColor)) ??
+        stripDataUrl;
+
+      const res = await fetch("/api/collage/print", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ imageDataUrl: printDataUrl }),
+      });
+      const data: unknown = await res.json().catch(() => null);
+      if (!res.ok) {
+        const msg =
+          data && typeof data === "object" && "error" in data && typeof data.error === "string"
+            ? data.error
+            : "Could not send collage to the kiosk printer.";
+        throw new Error(msg);
+      }
+      setPrintState("sent");
+      setTimeout(() => setPrintState("idle"), 1800);
+    } catch (error) {
+      setPrintError(error instanceof Error ? error.message : "Could not print collage.");
+      setPrintState("idle");
+    }
   };
 
   return (
@@ -544,7 +566,7 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
             resetShots();
             setView("camera");
           }}
-          onContinue={() => void goFinal()}
+          onContinue={goFinal}
         />
       )}
 
@@ -552,11 +574,13 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
       {view === "final" && (
         <FinalView
           stripDataUrl={stripDataUrl}
-          printSheetUrl={printSheetUrl}
+          printState={printState}
+          printError={printError}
           onHome={() => {
             stopCamera();
             onExit();
           }}
+          onPrint={handlePrint}
         />
       )}
     </div>
