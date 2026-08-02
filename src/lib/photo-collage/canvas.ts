@@ -151,11 +151,13 @@ export function canvasFilter(name: FilterName): string {
 export const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * Build a 4×6 sheet with two copies of the strip side by side, so a centre cut
- * yields two complete 2×6 strips instead of slicing one in half.
+ * Build a 4×6 sheet with two copies of the strip side by side, so the printer's
+ * centre cut yields two complete 2×6 strips instead of slicing one in half.
  *
- * Uses the captured strip PNG rather than the live decor canvas, which is
- * unmounted by the time the final view is showing.
+ * Uses the captured strip PNG, not the live decor canvas: by print time we're on
+ * the final view and the decor canvas is unmounted. Reading the unmounted canvas
+ * once yielded a single strip, which the DNP queue cover-scaled to the full 4×6
+ * and cut through the middle.
  */
 export async function composePlainPrintSheet(
   stripDataUrl: string,
@@ -179,10 +181,19 @@ export async function composePlainPrintSheet(
   const sheetW = 1200;
   const halfW = sheetW / 2; // 600 — the centre cut line (2 inches)
 
-  // Margins in px (300 px/inch on this 4×6 sheet). Equal on both sides for now;
-  // the real cut needs measuring on printed sheets before tuning these.
-  const OUTER_MARGIN = 30; // background colour outside each strip
-  const INNER_MARGIN = 30; // background colour between strip and centre cut
+  // The DNP cut lands on centre (x=600) with zero kerf: a 1px
+  // line at x=600 prints split across both inner edges, so nothing is trimmed.
+  // Earlier strips lost their inner frame only because that border was too thin
+  // and sat right under the blade.
+  //
+  // Margins in px (300 px/inch on this 4×6 sheet; 1px ≈ 0.085mm). The blade
+  // still cuts slightly into each inner edge at the seam, so INNER is set larger
+  // than OUTER and they come out equal after the cut. Tune by printing: inner
+  // border too thin → raise INNER_MARGIN; too fat → lower it. OUTER_MARGIN is
+  // the overall frame thickness. Rebuild (npm run build / -Dev) and hard-refresh
+  // (Ctrl+Shift+R) before reprinting.
+  const OUTER_MARGIN = 40; // pink outside each strip
+  const INNER_MARGIN = 18; // pink between strip and centre cut
 
   const stripTargetW = halfW - OUTER_MARGIN - INNER_MARGIN;
   const scale = stripTargetW / strip.width; // uniform — no distortion
