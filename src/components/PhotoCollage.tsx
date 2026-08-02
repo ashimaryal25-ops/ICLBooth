@@ -43,7 +43,7 @@ import { DecorView } from "@/components/photo-collage/DecorView";
 import { FinalView } from "@/components/photo-collage/FinalView";
 import { LayoutView } from "@/components/photo-collage/LayoutView";
 
-export function PhotoCollage({ onExit }: PhotoCollageProps) {
+export function PhotoCollage({ onExit, onActivity }: PhotoCollageProps) {
   const [view, setView] = useState<CollageView>("layout");
   const [slots, setSlots] = useState(4);
   const [filter, setFilter] = useState<FilterName>("none");
@@ -80,6 +80,12 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
   // PNG stickers preloaded, keyed by src for sync lookup in drawStickers.
   const stickerImgsRef = useRef<Map<string, HTMLImageElement>>(new Map());
   const [stickerImgsReady, setStickerImgsReady] = useState(false);
+
+  // Ref'd so the parent's inline arrow doesn't restart the capture effect.
+  const onActivityRef = useRef(onActivity);
+  useEffect(() => {
+    onActivityRef.current = onActivity;
+  }, [onActivity]);
 
   // --- Camera relay ---------------------------------------------------------
   const { sendToMirror, stopCamera, requestMirrorPhoto } = useMirrorRelay();
@@ -203,6 +209,9 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
             cx.drawImage(image, 0, 0, 640, 480);
             photosRef.current.push(c);
             setPreviews((p) => [...p, c.toDataURL("image/png")]);
+            // Taking a shot counts as being actively used, even though the guest
+            // never touched the screen.
+            onActivityRef.current?.();
           }
         }
         if (i < slots - 1) await sleep(1200);
@@ -495,6 +504,7 @@ export function PhotoCollage({ onExit }: PhotoCollageProps) {
             : "Could not send collage to the kiosk printer.";
         throw new Error(msg);
       }
+      onActivityRef.current?.();
       setPrintState("sent");
       setTimeout(() => setPrintState("idle"), 1800);
     } catch (error) {

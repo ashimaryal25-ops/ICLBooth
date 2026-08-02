@@ -18,6 +18,12 @@ export type Sticker = {
 export type PaletteDrag = { emoji: string; x: number; y: number; src?: string };
 
 export type PhotoCollageProps = {
-  /** Return to the app's home chooser. */
+  /** Return to the app's home (the 4-quadrant chooser). */
   onExit: () => void;
+  /**
+   * Signals "still in use" to the shell's idle timer. Needed because during the
+   * countdown the guest is posing, not tapping, so no pointer/key events fire
+   * and the booth would otherwise reset to home mid-session.
+   */
+  onActivity?: () => void;
 };
