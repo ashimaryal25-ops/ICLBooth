@@ -10,7 +10,9 @@
     height: 100%;
     width: 100%;
     overflow: hidden;
-    background-color: #1a1a2e;
+    /* Near-black (was navy #16213e) so a blank iframe never reads as a blue
+       flash while the game document / videos load. */
+    background-color: #0a0a1a;
   }
 
   body {
@@ -22,7 +24,7 @@
 
   /* game canvas — stretch to fill its container, no frame border */
   canvas {
-    background-color: #16213e;
+    background-color: #0a0a1a;
     border: none;
     display: block;
     width: 100%;

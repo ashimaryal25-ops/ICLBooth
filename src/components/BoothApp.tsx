@@ -158,7 +158,7 @@ export function BoothApp() {
       // Keep the "?v=..." exactly as the HTML asks for it. The browser treats
       // "/style.css" and "/style.css?v=2" as two different files, so pre-loading
       // the wrong one is wasted — the game would still download the real one.
-      "/ghost-runner/style.css?v=1",
+      "/ghost-runner/style.css?v=2",
       // Keep in sync with the <script> tags in index.html and attract.html.
       "/ghost-runner/game.js?v=1",
       "/ghost-runner/attract.html",
