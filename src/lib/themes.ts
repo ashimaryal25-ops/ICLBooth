@@ -1,21 +1,5 @@
 export const gettysburgTheme = {
   id: "gettysburg",
-  name: "Gettysburg College Edition",
-  eyebrow: "Campus Pack 001",
-  titles: [
-    "Campus Catalyst",
-    "Gettysburg Spark",
-    "First-Year Force",
-    "Bullet Builder",
-  ],
-  stats: [
-    "Creativity",
-    "Leadership",
-    "Focus",
-    "Campus Energy",
-    "Chaos Control",
-    "Execution",
-  ],
   traits: [
     "Builder",
     "Creative",
@@ -45,5 +29,3 @@ export const gettysburgTheme = {
   ],
   rarities: ["Common", "Rare", "Epic", "Legend", "Campus Myth"],
 } as const;
-
-export const themePacks = [gettysburgTheme] as const;

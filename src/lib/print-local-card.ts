@@ -1,11 +1,3 @@
-import { z } from "zod";
-
-const printLocalCardResponseSchema = z.object({
-  ok: z.literal(true),
-  printStatus: z.literal("printed"),
-  printerName: z.string().nullable(),
-});
-
 export async function printLocalCard(id: string) {
   const response = await fetch(`/api/local-cards/${id}/print`, {
     method: "POST",
@@ -24,6 +16,4 @@ export async function printLocalCard(id: string) {
 
     throw new Error(message);
   }
-
-  return printLocalCardResponseSchema.parse(data);
 }
