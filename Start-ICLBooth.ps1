@@ -144,7 +144,7 @@ if ($SwapMonitors -and $secondary) {
 
 # --- 4. Launch the windows --------------------------------------------------
 # Persistent profiles pin each screen to its display and keep the camera permission.
-$profileRoot   = Join-Path $env:LocalAppData "CardifyBooth"
+$profileRoot   = Join-Path $env:LocalAppData "ICLBooth"
 $boothProfile  = Join-Path $profileRoot "booth-profile"
 $mirrorProfile = Join-Path $profileRoot "mirror-profile"
 
@@ -229,4 +229,4 @@ if ($mirrorScreen) {
   Write-Host "Only one display detected - camera mirror was not opened." -ForegroundColor Yellow
 }
 
-Write-Step "CardifyBooth is running. To quit a kiosk window press  Alt+F4  (or Ctrl+W)."
+Write-Step "ICLBooth is running. To quit a kiosk window press  Alt+F4  (or Ctrl+W)."

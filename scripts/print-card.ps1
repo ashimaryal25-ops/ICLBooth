@@ -42,7 +42,7 @@ try {
     $selectedPrinter = $PrinterName
 
     if ($Mode -eq "DoubleStrip4x6") {
-      $stripPrinterName = $env:CARDIFYBOOTH_STRIP_PRINTER_NAME
+      $stripPrinterName = $env:ICLBOOTH_STRIP_PRINTER_NAME
       if ([string]::IsNullOrWhiteSpace($stripPrinterName)) {
         $stripPrinterName = "$PrinterName-Strips"
       }
@@ -52,7 +52,7 @@ try {
         $selectedPrinter = $stripPrinterName
       } else {
         Write-Warning "Collage mode: strip queue '$stripPrinterName' NOT FOUND. Printing to '$PrinterName' instead, so THE SHEET WILL NOT BE CUT."
-        Write-Warning "Fix: create a printer queue named '$stripPrinterName' with the DNP 2 inch cut enabled, or set CARDIFYBOOTH_STRIP_PRINTER_NAME to the queue that cuts."
+        Write-Warning "Fix: create a printer queue named '$stripPrinterName' with the DNP 2 inch cut enabled, or set ICLBOOTH_STRIP_PRINTER_NAME to the queue that cuts."
         Write-Warning "Queues available: $((Get-Printer | Select-Object -ExpandProperty Name) -join ', ')"
       }
     }
@@ -60,8 +60,8 @@ try {
     $document.PrinterSettings.PrinterName = $selectedPrinter
   } elseif ($Mode -eq "DoubleStrip4x6") {
     # No base printer to append "-Strips" to, so the job goes to the default queue uncut.
-    Write-Warning "Collage mode: CARDIFYBOOTH_PRINTER_NAME is not set, so the strip queue cannot be found and THE SHEET WILL NOT BE CUT."
-    Write-Warning "Fix: set CARDIFYBOOTH_PRINTER_NAME in .env.local to the DNP printer name."
+    Write-Warning "Collage mode: ICLBOOTH_PRINTER_NAME is not set, so the strip queue cannot be found and THE SHEET WILL NOT BE CUT."
+    Write-Warning "Fix: set ICLBOOTH_PRINTER_NAME in .env.local to the DNP printer name."
   }
 
   if (-not $document.PrinterSettings.IsValid) {

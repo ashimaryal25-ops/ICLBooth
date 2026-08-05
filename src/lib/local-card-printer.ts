@@ -35,9 +35,9 @@ export async function printLocalCardPng(
 
   const printOptions =
     typeof options === "string" ? { jobName: options } : options;
-  const jobName = printOptions.jobName ?? "CardifyBooth card";
+  const jobName = printOptions.jobName ?? "ICLBooth card";
   const mode = printOptions.mode ?? "FitPage";
-  const printerName = process.env.CARDIFYBOOTH_PRINTER_NAME?.trim() || null;
+  const printerName = process.env.ICLBOOTH_PRINTER_NAME?.trim() || null;
   const args = [
     "-NoProfile",
     "-ExecutionPolicy",
@@ -56,8 +56,8 @@ export async function printLocalCardPng(
     args.push("-RollWidthInches", String(printOptions.rollWidthInches));
   }
 
-  const horizontalOffset = process.env.CARDIFYBOOTH_COLLAGE_OFFSET_X?.trim() || null;
-  const verticalOffset = process.env.CARDIFYBOOTH_COLLAGE_OFFSET_Y?.trim() || null;
+  const horizontalOffset = process.env.ICLBOOTH_COLLAGE_OFFSET_X?.trim() || null;
+  const verticalOffset = process.env.ICLBOOTH_COLLAGE_OFFSET_Y?.trim() || null;
 
   if (horizontalOffset) {
     args.push("-HorizontalOffset", horizontalOffset);

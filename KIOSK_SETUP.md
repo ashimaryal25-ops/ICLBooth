@@ -1,4 +1,4 @@
-# CardifyBooth kiosk setup
+# ICLBooth kiosk setup
 
 This folder is the clean transfer copy of the booth app.
 
@@ -36,7 +36,7 @@ notepad .env.local
 To use the Windows default printer, leave this blank in `.env.local`:
 
 ```env
-CARDIFYBOOTH_PRINTER_NAME=
+ICLBOOTH_PRINTER_NAME=
 ```
 
 To force a specific printer, list installed printer names:
@@ -48,7 +48,7 @@ Get-Printer | Select-Object Name
 Copy the exact printer name into `.env.local`:
 
 ```env
-CARDIFYBOOTH_PRINTER_NAME=Your Exact Printer Name
+ICLBOOTH_PRINTER_NAME=Your Exact Printer Name
 ```
 
 The app prints saved final PNG files through `scripts/print-card.ps1`. It does not use browser printing and does not open a print preview. Trading cards print the saved card PNG, and photo collage strips print the exact rendered collage canvas PNG.

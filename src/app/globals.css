@@ -502,7 +502,7 @@ select:focus-visible {
   }
 }
 
-/* Attention pulse for the CardifyBooth START / CONTINUE image buttons. */
+/* Attention pulse for the ICLBooth START / CONTINUE image buttons. */
 @keyframes iclPulseRing {
   0%,
   100% {

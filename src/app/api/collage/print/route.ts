@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     await writeFile(imagePath, pngBuffer);
 
     const result = await printLocalCardPng(imagePath, {
-      jobName: "CardifyBooth collage",
+      jobName: "ICLBooth collage",
       mode: "DoubleStrip4x6",
     });
 

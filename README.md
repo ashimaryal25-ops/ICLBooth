@@ -1,4 +1,4 @@
-# CardifyBooth
+# ICLBooth
 
 Photo booth kiosk for Gettysburg College that turns portraits into
 collectible trading cards.

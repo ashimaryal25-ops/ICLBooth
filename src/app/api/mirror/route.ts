@@ -14,11 +14,11 @@ type MirrorRelay = {
 };
 
 const globalRelay = globalThis as typeof globalThis & {
-  cardifyMirrorRelay?: MirrorRelay;
+  iclMirrorRelay?: MirrorRelay;
 };
 
-const relay = globalRelay.cardifyMirrorRelay ?? { nextId: 1, events: [] };
-globalRelay.cardifyMirrorRelay = relay;
+const relay = globalRelay.iclMirrorRelay ?? { nextId: 1, events: [] };
+globalRelay.iclMirrorRelay = relay;
 
 export const dynamic = "force-dynamic";
 

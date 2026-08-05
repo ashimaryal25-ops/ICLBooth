@@ -400,7 +400,7 @@ function onMirrorFrame(dataUrl) {
 }
 
 const handsCh = (typeof BroadcastChannel !== "undefined")
-  ? new BroadcastChannel("cardifybooth-mirror")
+  ? new BroadcastChannel("iclbooth-mirror")
   : null;
 if (handsCh) {
   handsCh.onmessage = function(e) {

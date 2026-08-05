@@ -71,7 +71,7 @@ export function useMirrorRelay() {
     // BroadcastChannel is the fast same-browser path; when it's unavailable the
     // /api/mirror relay poll below still delivers every event.
     if (typeof BroadcastChannel !== "undefined") {
-      const channel = new BroadcastChannel("cardifybooth-mirror");
+      const channel = new BroadcastChannel("iclbooth-mirror");
       mirrorChannelRef.current = channel;
       channel.onmessage = (event) => handleMirrorMessage(event.data || {});
     }

@@ -45,7 +45,7 @@ type CachedCardRow = {
 };
 
 const storageRoot = path.join(process.cwd(), ".booth-storage");
-const dbPath = path.join(storageRoot, "cardifybooth.db");
+const dbPath = path.join(storageRoot, "iclbooth.db");
 
 let db: Database.Database | null = null;
 

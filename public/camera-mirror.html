@@ -36,7 +36,7 @@
     let starting = false;
     let retryTimer = null;
     const mirrorCh = typeof BroadcastChannel !== 'undefined'
-      ? new BroadcastChannel('cardifybooth-mirror')
+      ? new BroadcastChannel('iclbooth-mirror')
       : null;
     const PREF_KEY = 'cameraMirror.deviceId.v2';   // v2: ignores any old (wrong) saved pick
     let lastRelayId = 0;

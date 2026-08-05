@@ -4,13 +4,16 @@
  * PhotoCollage — React port of Chloe's original GBOOTH photo-strip booth,
  * rendered in-app.
  *
- * Owns the view state, capture session and canvas compositing. The four screens
+ * Owns the view state, capture session, canvas compositing, and print path
+ * (posts the strip to /api/collage/print for a silent DS-RX1). The four screens
  * live in ./photo-collage, helpers in lib/photo-collage.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import QRCode from "qrcode";
 import { findFrame, framesForCount } from "@/data/frame-themes";
+import { useMirrorRelay } from "@/hooks/use-mirror-relay";
+import { useStickerGestures } from "@/hooks/use-sticker-gestures";
 import {
   CROP_ZOOM,
   DEFAULT_STRIP_COLOR,
@@ -36,8 +39,6 @@ import {
   sleep,
 } from "@/lib/photo-collage/canvas";
 import type { CollageView, FilterName, PaletteDrag, PhotoCollageProps, Sticker } from "@/lib/photo-collage/types";
-import { useStickerGestures } from "@/hooks/use-sticker-gestures";
-import { useMirrorRelay } from "@/hooks/use-mirror-relay";
 import { CameraView } from "@/components/photo-collage/CameraView";
 import { DecorView } from "@/components/photo-collage/DecorView";
 import { FinalView } from "@/components/photo-collage/FinalView";
@@ -50,11 +51,10 @@ export function PhotoCollage({ onExit, onActivity }: PhotoCollageProps) {
   const [bgColor, setBgColor] = useState(DEFAULT_STRIP_COLOR);
   const [stickers, setStickers] = useState<Sticker[]>([]);
   // null = the plain background-colour strip. Anything else is one of the
-  // custom frames; the two paths are independent all the way to the print sheet.
+  // custom frames; the two paths are independent all the way to the printer.
   const [frameKey, setFrameKey] = useState<string | null>(null);
   const [frameImg, setFrameImg] = useState<HTMLImageElement | null>(null);
   const [framePage, setFramePage] = useState(0);
-  const [paletteDrag, setPaletteDrag] = useState<PaletteDrag | null>(null);
 
   const [countdown, setCountdown] = useState<number | null>(null);
   const [previews, setPreviews] = useState<string[]>([]);
@@ -65,8 +65,13 @@ export function PhotoCollage({ onExit, onActivity }: PhotoCollageProps) {
   const [stripDataUrl, setStripDataUrl] = useState("");
   const [printState, setPrintState] = useState<"idle" | "printing" | "sent">("idle");
   const [printError, setPrintError] = useState<string | null>(null);
+
+  const [paletteDrag, setPaletteDrag] = useState<PaletteDrag | null>(null);
   const [brandReady, setBrandReady] = useState(false);
   const [stripQrReady, setStripQrReady] = useState(false);
+  // PNG stickers preloaded, keyed by src for sync lookup in drawStickers.
+  const stickerImgsRef = useRef<Map<string, HTMLImageElement>>(new Map());
+  const [stickerImgsReady, setStickerImgsReady] = useState(false);
 
   const photosRef = useRef<HTMLCanvasElement[]>([]);
   // Bumped per capture run; a stale/overlapping loop checks this and bails.
@@ -77,18 +82,12 @@ export function PhotoCollage({ onExit, onActivity }: PhotoCollageProps) {
   const renderRafRef = useRef<number | null>(null);
   const brandImgRef = useRef<HTMLImageElement | null>(null);
   const stripQrImgRef = useRef<HTMLImageElement | null>(null);
-  // PNG stickers preloaded, keyed by src for sync lookup in drawStickers.
-  const stickerImgsRef = useRef<Map<string, HTMLImageElement>>(new Map());
-  const [stickerImgsReady, setStickerImgsReady] = useState(false);
 
   // Ref'd so the parent's inline arrow doesn't restart the capture effect.
   const onActivityRef = useRef(onActivity);
   useEffect(() => {
     onActivityRef.current = onActivity;
   }, [onActivity]);
-
-  // --- Camera relay ---------------------------------------------------------
-  const { sendToMirror, stopCamera, requestMirrorPhoto } = useMirrorRelay();
 
   // The ICL mark is local, so drawing it cannot taint the printable canvas.
   useEffect(() => {
@@ -97,7 +96,7 @@ export function PhotoCollage({ onExit, onActivity }: PhotoCollageProps) {
       brandImgRef.current = img;
       setBrandReady(true);
     };
-    img.src = "/cardify/icl-logo.png";
+    img.src = "/iclbooth/icl-logo.png";
 
     // Static QR code pointing to the ICL website
     QRCode.toDataURL("https://icl.sites.gettysburg.edu/", {
@@ -134,6 +133,10 @@ export function PhotoCollage({ onExit, onActivity }: PhotoCollageProps) {
     });
   }, []);
 
+  // --- Camera relay ---------------------------------------------------------
+  const { sendToMirror, stopCamera, requestMirrorPhoto } = useMirrorRelay();
+
+  // Reset shot state. Called from handlers, not the effect.
   const resetShots = useCallback(() => {
     photosRef.current = [];
     setPreviews([]);
@@ -163,6 +166,9 @@ export function PhotoCollage({ onExit, onActivity }: PhotoCollageProps) {
     if (view !== "camera") return;
     let cancelled = false;
     const runId = ++captureRunRef.current;
+
+    // True once a newer run supersedes this one (or it's torn down), so two
+    // countdown loops can't both push photos.
     const isStale = () => cancelled || runId !== captureRunRef.current;
 
     (async () => {
@@ -238,7 +244,7 @@ export function PhotoCollage({ onExit, onActivity }: PhotoCollageProps) {
     [frameKey, slots],
   );
 
-  // Preload the on-screen frame art; the strip re-renders once it is decoded.
+  // Preload the on-screen frame art; renderStrip re-runs once it is decoded.
   useEffect(() => {
     if (!activeFrame) return;
     let cancelled = false;
@@ -302,16 +308,19 @@ export function PhotoCollage({ onExit, onActivity }: PhotoCollageProps) {
     ctx.fillRect(0, 0, STRIP_W, STRIP_H);
 
     const slotCount = photos.length;
+
+    // N equal photos + gaps in a fixed band (same slotPhotoHeight as the camera
+    // preview), so 2/3/4-shot strips stay consistent with no dead space.
     const photoW = STRIP_PHOTO_W;
     const photoH = slotPhotoHeight(slotCount);
 
     for (let i = 0; i < slotCount; i++) {
       const y = STRIP_TOP_MARGIN + i * (photoH + STRIP_GAP);
-      const src = photos[i];
 
       // Cover-crop into the slot (no stretch), zoomed slightly (CROP_ZOOM) and
       // biased downward (VERTICAL_CROP_BIAS) to trim the empty ceiling the low
       // booth camera captures while keeping the face and torso.
+      const src = photos[i];
       const targetAspect = photoW / photoH;
       let sw = src.width;
       let sh = src.width / targetAspect;
@@ -360,6 +369,7 @@ export function PhotoCollage({ onExit, onActivity }: PhotoCollageProps) {
       const qrY = STRIP_H - 154;
       ctx.drawImage(stripQrImg, qrX, qrY, qrSize, qrSize);
     }
+
   }, [bgColor, filter, brandReady, stripQrReady, activeFrame, frameImg]);
 
   // Gesture refs are created here and passed into useStickerGestures, so the
@@ -370,7 +380,8 @@ export function PhotoCollage({ onExit, onActivity }: PhotoCollageProps) {
   /**
    * Blit the prepared base onto the visible canvas and stamp the stickers on
    * top. This is all a drag/pinch costs: one full-canvas copy plus a handful of
-   * small sticker blits, with no photo re-cropping and no filter passes.
+   * small sticker blits, with no photo re-cropping, no filter passes and no
+   * frame rescale.
    */
   const composite = useCallback(() => {
     const canvas = decorCanvasRef.current;
@@ -407,8 +418,9 @@ export function PhotoCollage({ onExit, onActivity }: PhotoCollageProps) {
   }, [composite]);
 
   // --- Sticker gestures (drag / pinch / palette) ----------------------------
-  // This hook must be called after scheduleComposite (it takes it as an
-  // argument) and before the render effects below that read stickersRef.
+  // Extracted to src/hooks/use-sticker-gestures.ts; this hook must be called
+  // after scheduleComposite (it takes it as an argument) and before the render
+  // effects below that read stickersRef.
   const {
     onPointerDown,
     onPointerMove,
@@ -439,8 +451,8 @@ export function PhotoCollage({ onExit, onActivity }: PhotoCollageProps) {
   }, [stickers]);
 
   // Cheap repaint when the committed sticker list changes (added, cleared, or a
-  // gesture ended). Called directly rather than via rAF so the strip still
-  // paints on a backgrounded tab.
+  // gesture ended) or when the PNG stickers finish preloading. Called directly
+  // rather than via rAF so the strip still paints on a backgrounded tab.
   useEffect(() => {
     if (view !== "decor") return;
     composite();
@@ -483,7 +495,7 @@ export function PhotoCollage({ onExit, onActivity }: PhotoCollageProps) {
     setPrintError(null);
     try {
       // Custom frames ship as ready-made 4×6 sheets; the plain-colour strip is
-      // composed here into the two-up sheet. Both composers live in
+      // composed here into the calibrated two-up sheet. Both composers live in
       // src/lib/photo-collage/canvas.ts.
       const printDataUrl =
         (activeFrame

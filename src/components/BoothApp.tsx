@@ -306,7 +306,7 @@ export function BoothApp() {
       style={
         step === "cardSetup" || step === "generating" || step === "reveal"
           ? {
-              backgroundImage: "url('/cardify/bg.png')",
+              backgroundImage: "url('/iclbooth/bg.png')",
               backgroundSize: "cover",
               backgroundPosition: "center",
             }
@@ -330,7 +330,7 @@ export function BoothApp() {
               onClick={() => setStep("cardSetup")}
               className="group relative flex items-center justify-center overflow-hidden bg-cover bg-center bg-no-repeat transition-all hover:brightness-105 active:brightness-95"
               style={{
-                backgroundImage: "url('/cardify/home-bg.png')",
+                backgroundImage: "url('/iclbooth/home-bg.png')",
               }}
             >
               {/* All tile text (Trading Card, Gettysburg themed, Tap to start) is baked into home-bg.png. */}
@@ -351,7 +351,7 @@ export function BoothApp() {
             >
               <span className="relative inline-flex max-h-full max-w-full">
                 <Image
-                  src="/cardify/collage-tile.png"
+                  src="/iclbooth/collage-tile.png"
                   alt=""
                   width={2906}
                   height={1440}
@@ -426,7 +426,7 @@ export function BoothApp() {
             <div className="flex flex-col justify-between overflow-hidden bg-[#fffdf9] p-8 text-left">
               <div className="flex items-center gap-2.5">
                 <Info size={38} strokeWidth={2.2} className="text-[var(--gc-orange)]" />
-                <span className="text-2xl font-black text-[var(--gc-black)]">Welcome to CardifyBooth</span>
+                <span className="text-2xl font-black text-[var(--gc-black)]">Welcome to ICLBooth</span>
               </div>
               <div className="space-y-3 text-[var(--gc-gray)]">
                 <p className="text-lg font-semibold leading-6">

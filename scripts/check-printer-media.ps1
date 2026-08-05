@@ -1,14 +1,14 @@
 <#
   Watches the DNP DS-RX1 roll and sends ONE email when media drops below a
   threshold. Remaining is read via read-printer-dll.ps1 (cspstat.dll); a
-  simulated value is used when CARDIFYBOOTH_SIMULATED_REMAINING is set (testing).
+  simulated value is used when ICLBOOTH_SIMULATED_REMAINING is set (testing).
 
   De-dups: emails once per roll crossing below the threshold, re-arms when a new
   roll is detected (count jumps back up).
 
   Email config from .env.local: SMTP_USER, SMTP_APP_PASSWORD, ALERT_EMAIL_TO
   (required); SMTP_SERVER (smtp.gmail.com), SMTP_PORT (587),
-  CARDIFYBOOTH_LOW_THRESHOLD (50), CARDIFYBOOTH_ROLL_CAPACITY (700), PRINTERINFO_PATH.
+  ICLBOOTH_LOW_THRESHOLD (50), ICLBOOTH_ROLL_CAPACITY (700), PRINTERINFO_PATH.
 
   Test: -DryRun (no email), -SimulateRemaining <n>, -TestEmail.
 #>
@@ -58,9 +58,9 @@ function Read-DotEnv($path) {
 $cfg = Read-DotEnv $envFile
 function Cfg($key, $default) { if ($cfg.ContainsKey($key) -and $cfg[$key].Trim().Length -gt 0) { return $cfg[$key].Trim() } return $default }
 
-$threshold    = [int](Cfg "CARDIFYBOOTH_LOW_THRESHOLD" "50")
-$rollCapacity = [int](Cfg "CARDIFYBOOTH_ROLL_CAPACITY" "700")
-$dnpDir       = Cfg "CARDIFYBOOTH_DNP_DIR" "C:\DNPPIA\PrinterInfo"
+$threshold    = [int](Cfg "ICLBOOTH_LOW_THRESHOLD" "50")
+$rollCapacity = [int](Cfg "ICLBOOTH_ROLL_CAPACITY" "700")
+$dnpDir       = Cfg "ICLBOOTH_DNP_DIR" "C:\DNPPIA\PrinterInfo"
 
 # Reads remaining prints via read-printer-dll.ps1 (or a test override). Returns
 # $null when the printer is busy so the caller skips this cycle without alerting.
@@ -70,9 +70,9 @@ function Get-RemainingPrints {
     return $SimulateRemaining
   }
 
-  $sim = Cfg "CARDIFYBOOTH_SIMULATED_REMAINING" ""
+  $sim = Cfg "ICLBOOTH_SIMULATED_REMAINING" ""
   if ($sim -ne "") {
-    Write-Log "Using CARDIFYBOOTH_SIMULATED_REMAINING from .env.local: $sim"
+    Write-Log "Using ICLBOOTH_SIMULATED_REMAINING from .env.local: $sim"
     return [int]$sim
   }
 
@@ -111,7 +111,7 @@ function Send-LowRollEmail($remaining) {
   $server   = Cfg "SMTP_SERVER" "smtp.gmail.com"
   $port     = [int](Cfg "SMTP_PORT" "587")
 
-  $subject = "CardifyBooth: printer roll low ($remaining prints left)"
+  $subject = "ICLBooth: printer roll low ($remaining prints left)"
   $body    = @"
 The DNP DS-RX1 photo roll is running low.
 
@@ -150,9 +150,9 @@ function Send-PrinterTestEmail($remaining) {
     throw "Email not configured. Set SMTP_USER, SMTP_APP_PASSWORD and ALERT_EMAIL_TO in .env.local."
   }
 
-  $subject = "CardifyBooth TEST: printer connection OK ($remaining prints remaining)"
+  $subject = "ICLBooth TEST: printer connection OK ($remaining prints remaining)"
   $body = @"
-This is a test of the CardifyBooth printer email monitor.
+This is a test of the ICLBooth printer email monitor.
 
 PrinterInfo was read successfully.
 Current prints remaining: $remaining

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CardifyBooth | Gettysburg College Edition",
+  title: "ICLBooth | Gettysburg College Edition",
   description: "Photo booth kiosk that turns Gettysburg College portraits into collectible cards.",
 };
 
