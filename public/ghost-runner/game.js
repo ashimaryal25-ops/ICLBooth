@@ -47,7 +47,12 @@ let lvl2GraceTimer = 0;
 let showingInstructions = false;
 let instructionsLevel = 1;
 let instructionsTimer = 0;
-const INSTRUCTIONS_DURATION = 900; // 15 seconds at 60fps
+const INSTRUCTIONS_DURATION = 480; // 8 seconds at 60fps
+
+// "Skip" button shown on the instructions screen, top-left so it never
+// overlaps the camera HUD (which lives top-right). Lets repeat players
+// who already know the controls jump straight past the 8-second wait.
+const SKIP_BTN = { x: 30, y: 30, w: 150, h: 56 };
 
 const startMusic = new Audio("Assets/start_sound.wav");
 startMusic.loop = true;
@@ -79,7 +84,12 @@ bgVideo.loop = true;
 bgVideo.muted = true;
 bgVideo.playsInline = true;
 bgVideo.load();
-bgVideo.addEventListener("ended", function() { bgVideo.currentTime = 0; bgVideo.play(); });
+// Warm the muted, looping start-screen video as soon as possible so its
+// readyState reaches 2 before the first painted frame. loop=true loops it
+// natively, so no "ended" seek handler is attached here: a manual
+// currentTime = 0 seek can briefly drop readyState below 2 and re-trigger the
+// dark fallback flash while the ~54 MB start video re-buffers.
+bgVideo.play().catch(function() {});
 
 // background video for gameplay
 const gameBgVideo = document.createElement("video");
@@ -90,12 +100,13 @@ lvl2BgVideo.loop = true;
 lvl2BgVideo.muted = true;
 lvl2BgVideo.playsInline = true;
 lvl2BgVideo.load();
+lvl2BgVideo.play().catch(function() {});
 gameBgVideo.src = "Assets/game_background.mp4";
 gameBgVideo.loop = true;
 gameBgVideo.muted = true;
 gameBgVideo.playsInline = true;
 gameBgVideo.load();
-gameBgVideo.addEventListener("ended", function() { gameBgVideo.currentTime = 0; gameBgVideo.play(); });
+gameBgVideo.play().catch(function() {});
 
 // gifData stores: { frames: [{cropped canvas}], delays, currentFrame, lastTime }
 const gifData = {};
@@ -354,8 +365,43 @@ document.addEventListener("keydown", function(e) {
     lvl2BgSound.play();
   }
 });
-canvas.addEventListener("touchstart", function() { reportActivity(); jump(); });
-canvas.addEventListener("mousedown", function() { reportActivity(); jump(); });
+// Converts a raw pointer event position into canvas-internal coordinates,
+// accounting for the canvas being displayed at a different size than its
+// internal resolution (it's scaled to fit the page via CSS).
+function getCanvasPos(clientX, clientY) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  return { x: (clientX - rect.left) * scaleX, y: (clientY - rect.top) * scaleY };
+}
+
+function pointInRect(px, py, r) {
+  return px >= r.x && px <= r.x + r.w && py >= r.y && py <= r.y + r.h;
+}
+
+canvas.addEventListener("touchstart", function(e) {
+  reportActivity();
+  const touch = e.touches && e.touches[0];
+  if (touch && showingInstructions) {
+    const pos = getCanvasPos(touch.clientX, touch.clientY);
+    if (pointInRect(pos.x, pos.y, SKIP_BTN)) {
+      finishInstructions();
+      return;
+    }
+  }
+  jump();
+});
+canvas.addEventListener("mousedown", function(e) {
+  reportActivity();
+  if (showingInstructions) {
+    const pos = getCanvasPos(e.clientX, e.clientY);
+    if (pointInRect(pos.x, pos.y, SKIP_BTN)) {
+      finishInstructions();
+      return;
+    }
+  }
+  jump();
+});
 
 let handY = null;
 let handX = null;
@@ -373,7 +419,6 @@ webcamVideo.autoplay = true; webcamVideo.playsInline = true;
 
 let gameStream = null;
 let cameraActive = false;
-let fallbackCameraAttempts = 0;
 let lastCamError = "";
 
 // --- Live frames from the booth mirror ------------------------------------
@@ -445,7 +490,7 @@ async function pollHandsRelay() {
       if (ev.id) handsRelaySince = Math.max(handsRelaySince, ev.id);
       if (ev.type === "hands-frame" && ev.dataUrl) onMirrorFrame(ev.dataUrl);
     }
-  } catch (e) {}
+  } catch {}
   setTimeout(pollHandsRelay, 100);
 }
 pollHandsRelay();
@@ -468,13 +513,11 @@ function acquireCamera() {
   if (window.parent && window.parent.__boothCamera && window.parent.__boothCamera.stream) {
     gameStream = window.parent.__boothCamera.stream;
     webcamVideo.srcObject = gameStream;
-    webcamVideo.play().catch(function(e) {});
+    webcamVideo.play().catch(function() {});
     cameraActive = true;
     console.log("Using shared booth camera");
     return;
   }
-
-  fallbackCameraAttempts++;
 
   if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     console.warn("navigator.mediaDevices.getUserMedia is not supported (likely HTTP). Camera disabled.");
@@ -486,7 +529,7 @@ function acquireCamera() {
   navigator.mediaDevices.getUserMedia({ video: true }).then(function(stream) {
     gameStream = stream;
     webcamVideo.srcObject = stream;
-    webcamVideo.play().catch(function(e) {});
+    webcamVideo.play().catch(function() {});
     cameraActive = true;
     console.log("Game fallback camera acquired");
   }).catch(function(e) {
@@ -569,7 +612,7 @@ async function pumpHands() {
     handsBusy = true;
     try {
       await handsModel.send({ image: src });
-    } catch (e) {}
+    } catch {}
     handsBusy = false;
   }
   requestAnimationFrame(pumpHands);
@@ -768,13 +811,23 @@ function drawGameOver() {
   ctx.font = "32px Arial";
   ctx.fillText("Score: " + score, canvas.width / 2, canvas.height / 2 + 30);
   ctx.font = "24px Arial";
-  ctx.fillText("Press Space to Continue", canvas.width / 2, canvas.height / 2 + 80);
+  ctx.fillText("Tap to Continue", canvas.width / 2, canvas.height / 2 + 80);
   ctx.textAlign = "left";
 }
 
 // Pre-level instruction screen. Shown automatically (no input needed) for
 // INSTRUCTIONS_DURATION frames before level 1 starts and again before level 2
 // starts, so anyone walking up to the kiosk can read how to play.
+function drawRoundRect(x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x + r, y);
+  ctx.arcTo(x + w, y, x + w, y + h, r);
+  ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r);
+  ctx.arcTo(x, y, x + w, y, r);
+  ctx.closePath();
+}
+
 function drawInstructions() {
   ctx.fillStyle = "rgba(8,8,10,0.93)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -901,6 +954,35 @@ function drawInstructions() {
   ctx.font = "bold 40px Arial";
   ctx.fillText("Starting in " + secondsLeft + "...", canvas.width / 2, y);
   ctx.textAlign = "left";
+
+  // Skip button - drawn last so it's always on top, same spot on both levels
+  ctx.fillStyle = "rgba(255,255,255,0.08)";
+  ctx.strokeStyle = "#39FF14";
+  ctx.lineWidth = 2;
+  drawRoundRect(SKIP_BTN.x, SKIP_BTN.y, SKIP_BTN.w, SKIP_BTN.h, 10);
+  ctx.fill();
+  ctx.stroke();
+
+  const iconCX = SKIP_BTN.x + 30;
+  const iconCY = SKIP_BTN.y + SKIP_BTN.h / 2;
+  ctx.fillStyle = "#39FF14";
+  ctx.beginPath();
+  ctx.moveTo(iconCX - 14, iconCY - 12);
+  ctx.lineTo(iconCX - 14, iconCY + 12);
+  ctx.lineTo(iconCX - 2, iconCY);
+  ctx.closePath();
+  ctx.fill();
+  ctx.beginPath();
+  ctx.moveTo(iconCX - 2, iconCY - 12);
+  ctx.lineTo(iconCX - 2, iconCY + 12);
+  ctx.lineTo(iconCX + 10, iconCY);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = "#ffffff";
+  ctx.font = "22px Arial";
+  ctx.textAlign = "left";
+  ctx.fillText("Skip", SKIP_BTN.x + 60, iconCY + 8);
 }
 
 function drawleaderBoard() {
@@ -955,14 +1037,76 @@ function drawNameInput() {
 }
 
 
-function drawStartScreen() {
-  if (bgVideo.readyState >= 2) {
-    if (bgVideo.paused) bgVideo.play();
-    ctx.drawImage(bgVideo, 0, 0, canvas.width, canvas.height);
-  } else {
-    ctx.fillStyle = "#16213e";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+// Paints a background video over a stable near-black fallback with a gentle
+// fade-in. The old code painted the navy #16213e until the ~54 MB start-screen
+// video buffered to readyState >= 2, then the bright video popped in (and could
+// pop back during a 54 MB seek/stall) - the "blue flicker" on start. The
+// fallback is now near-black and the video fades up over ~0.5s, so nothing
+// ever flashes.
+const bgFadeAlpha = new WeakMap();
+// Last known-good frame per video. A stalling video used to blank the canvas to
+// the fallback colour, and #0a0a1a is rgb(10,10,26) - still blue-dominant, so
+// every re-buffer of the ~54 MB start video read as a blue flash on an
+// otherwise greyscale scene. Repainting the last real frame instead means a
+// stall now looks like a momentarily frozen background, which is invisible.
+const bgLastFrame = new WeakMap();
+let bgFrameTick = 0;
+
+function cacheVideoFrame(video) {
+  // Snapshotting every frame would cost a second full-canvas draw at 60fps, so
+  // refresh roughly every 10 frames; a ~0.16s stale freeze frame is unnoticeable.
+  if (bgFrameTick % 10 !== 0) return;
+  let cache = bgLastFrame.get(video);
+  if (!cache) {
+    cache = document.createElement("canvas");
+    bgLastFrame.set(video, cache);
   }
+  if (cache.width !== canvas.width || cache.height !== canvas.height) {
+    cache.width = canvas.width;
+    cache.height = canvas.height;
+  }
+  cache.getContext("2d").drawImage(video, 0, 0, cache.width, cache.height);
+}
+
+function paintVideoBg(video, fallbackColor) {
+  // Exactly one background is painted per rendered frame, so this doubles as
+  // the frame counter that paces the snapshot above.
+  bgFrameTick++;
+  const fallback = fallbackColor || "#0a0a1a";
+  const ok = video.readyState >= 2 && video.videoWidth > 0;
+  if (ok) {
+    if (video.paused) video.play();
+    const a = bgFadeAlpha.get(video) || 0;
+    const next = Math.min(1, a + 0.05);
+    bgFadeAlpha.set(video, next);
+    // Paint the fallback underneath so a partially-faded video blends over a
+    // stable dark fill instead of the CSS backdrop.
+    ctx.fillStyle = fallback;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    if (next < 1) ctx.globalAlpha = next;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    if (next < 1) ctx.globalAlpha = 1;
+    cacheVideoFrame(video);
+    return;
+  }
+
+  // Stalled. Hold the last real frame rather than flashing the fallback. Note
+  // the fade alpha is deliberately NOT reset here: on recovery the video must
+  // resume at full opacity, or every stall would also trigger a visible fade-up.
+  const cache = bgLastFrame.get(video);
+  if (cache && cache.width) {
+    ctx.drawImage(cache, 0, 0, canvas.width, canvas.height);
+    return;
+  }
+
+  // Nothing decoded yet (very first frames) - the fallback is all we have.
+  bgFadeAlpha.set(video, 0);
+  ctx.fillStyle = fallback;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+}
+
+function drawStartScreen() {
+  paintVideoBg(bgVideo, "#0a0a1a");
   ctx.fillStyle = "rgba(0, 0, 0, 0.45)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
   let floatOffset = Math.sin(pulseValue) * 15;
@@ -1003,14 +1147,12 @@ function resetGame() {
   lvl2BgVideo.currentTime = 0;
   gameBgVideo.pause();
   gameBgVideo.currentTime = 0;
-  startMusic.play().catch(function(e) {});
-  bgVideo.currentTime = 0;
-  bgVideo.play().catch(function(e) {});
+  startMusic.play().catch(function() {});
+  // Don't seek bgVideo back to 0 here: the seek can briefly drop its
+  // readyState below 2, making drawStartScreen paint the #16213e fallback for
+  // a frame on new-game. It is looping and muted, so just resume it.
+  bgVideo.play().catch(function() {});
   spawnObstacle();
-}
-
-function checkTopFive() {
-  return leaderBoard.length < 5 || score > leaderBoard[leaderBoard.length - 1].score;
 }
 
 function saveScore(name) {
@@ -1020,22 +1162,36 @@ function saveScore(name) {
 }
 
 function drawGameBackground() {
-  if (gameBgVideo.readyState >= 2) {
-    if (gameBgVideo.paused) gameBgVideo.play();
-    ctx.drawImage(gameBgVideo, 0, 0, canvas.width, canvas.height);
-  } else {
-    ctx.fillStyle = "#16213e";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-  }
+  paintVideoBg(gameBgVideo, "#0a0a1a");
 }
 
 function drawLvl2Background() {
-  if (lvl2BgVideo.readyState >= 2) {
-    if (lvl2BgVideo.paused) lvl2BgVideo.play();
-    ctx.drawImage(lvl2BgVideo, 0, 0, canvas.width, canvas.height);
+  paintVideoBg(lvl2BgVideo, "#0a0a1a");
+}
+
+// Ends the instructions screen and starts whatever comes next (level 1
+// gameplay, or level 2 gameplay). Called both when the timer runs out and
+// when the player taps the skip button - same exact transition either way.
+function finishInstructions() {
+  showingInstructions = false;
+  if (instructionsLevel === 1) {
+    gameStarted = true;
+    score = 0;
+    obstacles = [];
+    spawnObstacle();
+    bgVideo.pause();
+    gameBgVideo.play();
+    startMusic.play().catch(function() {});
   } else {
-    ctx.fillStyle = "#0a0a1a";
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    currentLevel = 2;
+    lvl2GraceTimer = 90;
+    handXHistory = [];
+    score20Sound.pause();
+    score20Sound.currentTime = 0;
+    lvl2BgSound.play();
+    lvl2BgVideo.play();
+    obstacles = [];
+    score = 0;
   }
 }
 
@@ -1046,26 +1202,7 @@ function gameLoop(timestamp) {
     drawInstructions();
     instructionsTimer--;
     if (instructionsTimer <= 0) {
-      showingInstructions = false;
-      if (instructionsLevel === 1) {
-        gameStarted = true;
-        score = 0;
-        obstacles = [];
-        spawnObstacle();
-        bgVideo.pause();
-        gameBgVideo.play();
-        startMusic.play().catch(function(e) {});
-      } else {
-        currentLevel = 2;
-        lvl2GraceTimer = 90;
-        handXHistory = [];
-        score20Sound.pause();
-        score20Sound.currentTime = 0;
-        lvl2BgSound.play();
-        lvl2BgVideo.play();
-        obstacles = [];
-        score = 0;
-      }
+      finishInstructions();
     }
   } else if (!gameStarted) {
     drawStartScreen();
@@ -1164,7 +1301,11 @@ function drawCameraHUD() {
   ctx.restore();
 }
 
-loadAssets().then(function() {
-  spawnObstacle();
-  gameLoop();
-});
+// Start the render loop immediately so the start screen paints on the first
+// frame instead of sitting on the CSS #16213e backdrop while the GIFs download.
+// The start screen draws no GIF sprites, and gameplay is only reachable through
+// the instructions screen, so the assets finish loading before anything needs
+// them.
+spawnObstacle();
+gameLoop();
+loadAssets();

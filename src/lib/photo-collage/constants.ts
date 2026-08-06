@@ -1,6 +1,6 @@
 // All the fixed values for the photo-strip flow: strip geometry, palette,
-// filters and layout options. Kept apart from the views so the numbers are
-// easy to find and tune in one place.
+// filters, stickers and layout options. Kept apart from the views so
+// the numbers are easy to find and tune in one place.
 
 import type { FilterName } from "./types";
 
@@ -19,7 +19,7 @@ export const VERTICAL_CROP_BIAS = 0.72; // 0 keeps the top of the frame, 1 keeps
 // footer sits in a fixed reserved band at the bottom. No per-layout tuning.
 export const STRIP_TOP_MARGIN = 24;
 export const STRIP_GAP = 20;
-export const STRIP_FOOTER_H = 250; // reserved bottom band for college text + logo
+export const STRIP_FOOTER_H = 250; // reserved bottom band for college text + QR + logo
 
 // Photo width is constant; height follows from how many photos share the band.
 // The strip renderer AND the camera preview both use this, so the shape a guest

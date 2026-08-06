@@ -3,7 +3,7 @@
 import { LAYOUT_OPTIONS, backBtn } from "@/lib/photo-collage/constants";
 
 type LayoutViewProps = {
-  /** Return to the app's home chooser. */
+  /** Return to the app's home (the 4-quadrant chooser). */
   onExit: () => void;
   /** Start a capture session with the chosen shot count (2 / 3 / 4). */
   onPick: (slots: number) => void;

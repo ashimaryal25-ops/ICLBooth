@@ -1,6 +1,11 @@
 const canvas = document.getElementById("gameCanvas");
 let gameOver = false;
 let leaderBoard = [];
+// Fetch leaderboard on load
+fetch('/api/leaderboard')
+  .then(res => res.json())
+  .then(data => { if(Array.isArray(data)) leaderBoard = data; });
+
 let enteringName = false;
 let showingLeaderBoard = false;
 let leaderboardAnimationProgress = 0;

@@ -63,7 +63,7 @@ export function CameraView({
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center px-10 text-center text-2xl font-black text-white">
-              Look at the camera
+              Look at the camera screen
             </div>
           )}
           {countdown !== null && (
