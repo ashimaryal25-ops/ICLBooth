@@ -18,10 +18,8 @@ export type LocalCardRecord = {
   knownFor: string;
   specialAbility: string;
   cardPngPath: string;
-  cardUrl: string;
   printStatus: PrintStatus;
   createdAt: string;
-  expiresAt: string;
 };
 
 type LocalCardRow = {
@@ -33,10 +31,8 @@ type LocalCardRow = {
   known_for: string;
   special_ability: string;
   card_png_path: string;
-  card_url: string;
   print_status: PrintStatus;
   created_at: string;
-  expires_at: string;
 };
 
 type CachedCardRow = {
@@ -48,6 +44,49 @@ const storageRoot = path.join(process.cwd(), ".booth-storage");
 const dbPath = path.join(storageRoot, "iclbooth.db");
 
 let db: Database.Database | null = null;
+
+// Older DBs carry columns nothing reads: a pre-refactor `card_url`, and an
+// `expires_at` that was never enforced. Rebuild the table without them once,
+// preserving every other column.
+function migrateLocalCardDb(database: Database.Database) {
+  const columns = database.prepare("pragma table_info(local_cards)").all() as Array<{ name: string }>;
+  const names = new Set(columns.map((column) => column.name));
+
+  if (!names.has("card_url") && !names.has("expires_at")) {
+    return;
+  }
+
+  const migrate = database.transaction(() => {
+    database.exec("alter table local_cards rename to local_cards_legacy;");
+    database.exec(`
+      create table local_cards (
+        id text primary key,
+        display_name text not null,
+        rarity text not null,
+        trait_scores_json text not null,
+        campus_power integer not null,
+        known_for text not null,
+        special_ability text not null,
+        card_png_path text not null,
+        print_status text not null default 'not_requested',
+        created_at text not null
+      );
+    `);
+    database.exec(`
+      insert into local_cards (
+        id, display_name, rarity, trait_scores_json, campus_power,
+        known_for, special_ability, card_png_path, print_status, created_at
+      )
+      select
+        id, display_name, rarity, trait_scores_json, campus_power,
+        known_for, special_ability, card_png_path, print_status, created_at
+      from local_cards_legacy;
+    `);
+    database.exec("drop table local_cards_legacy;");
+  });
+
+  migrate();
+}
 
 export function getLocalCardDb() {
   mkdirSync(storageRoot, { recursive: true });
@@ -65,12 +104,12 @@ export function getLocalCardDb() {
         known_for text not null,
         special_ability text not null,
         card_png_path text not null,
-        card_url text not null,
         print_status text not null default 'not_requested',
-        created_at text not null,
-        expires_at text not null
+        created_at text not null
       );
     `);
+
+    migrateLocalCardDb(db);
   }
 
   return db;
@@ -91,10 +130,8 @@ export function insertLocalCardRecord(record: LocalCardRecord) {
         known_for,
         special_ability,
         card_png_path,
-        card_url,
         print_status,
-        created_at,
-        expires_at
+        created_at
       )
       values (
         @id,
@@ -105,10 +142,8 @@ export function insertLocalCardRecord(record: LocalCardRecord) {
         @knownFor,
         @specialAbility,
         @cardPngPath,
-        @cardUrl,
         @printStatus,
-        @createdAt,
-        @expiresAt
+        @createdAt
       )
     `,
     )
@@ -169,10 +204,8 @@ export function getLocalCardRecord(id: string) {
         known_for,
         special_ability,
         card_png_path,
-        card_url,
         print_status,
-        created_at,
-        expires_at
+        created_at
       from local_cards
       where id = ?
     `,
@@ -192,10 +225,8 @@ export function getLocalCardRecord(id: string) {
     knownFor: row.known_for,
     specialAbility: row.special_ability,
     cardPngPath: row.card_png_path,
-    cardUrl: row.card_url,
     printStatus: row.print_status,
     createdAt: row.created_at,
-    expiresAt: row.expires_at,
   } satisfies LocalCardRecord;
 }
 

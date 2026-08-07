@@ -11,7 +11,6 @@ import {
 
 const storageRoot = path.join(process.cwd(), ".booth-storage");
 const cardsDir = path.join(storageRoot, "cards");
-const cardLifetimeMs = 24 * 60 * 60 * 1000;
 const maxCachedCards = 100;
 
 function getTraitScores(card: CardIdentity) {
@@ -76,10 +75,8 @@ export async function saveLocalCard(params: {
     knownFor: formatKnownFor(params.card.description),
     specialAbility: params.card.specialAbility,
     cardPngPath,
-    cardUrl: `/api/local-cards/${params.id}`,
     printStatus: "not_requested",
     createdAt: createdAt.toISOString(),
-    expiresAt: new Date(createdAt.getTime() + cardLifetimeMs).toISOString(),
   };
 
   insertLocalCardRecord(record);

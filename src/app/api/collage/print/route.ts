@@ -1,4 +1,4 @@
-import { mkdir, writeFile } from "fs/promises";
+import { mkdir, readdir, stat, unlink, writeFile } from "fs/promises";
 import path from "path";
 import { NextResponse } from "next/server";
 import { z } from "zod";
@@ -13,6 +13,26 @@ const printCollageSchema = z.object({
 
 const storageRoot = path.join(process.cwd(), ".booth-storage");
 const collagePrintDir = path.join(storageRoot, "collage-print");
+const maxCollagePrints = 100;
+
+// Unlike cards, collages have no DB — they're just PNGs in collage-print/, which
+// would otherwise grow with every print. Keep the newest 100 by mtime.
+async function enforceCollageCacheLimit() {
+  const names = (await readdir(collagePrintDir).catch(() => [])).filter((name) =>
+    name.endsWith(".png"),
+  );
+  if (names.length <= maxCollagePrints) return;
+
+  const files = await Promise.all(
+    names.map(async (name) => {
+      const full = path.join(collagePrintDir, name);
+      return { full, mtime: (await stat(full)).mtimeMs };
+    }),
+  );
+  files.sort((a, b) => b.mtime - a.mtime);
+  await Promise.all(files.slice(maxCollagePrints).map((f) => unlink(f.full).catch(() => {})));
+}
+
 export async function POST(request: Request) {
   const body: unknown = await request.json().catch(() => null);
   const parsed = printCollageSchema.safeParse(body);
@@ -28,6 +48,7 @@ export async function POST(request: Request) {
     const imagePath = path.join(collagePrintDir, `collage-${crypto.randomUUID()}.png`);
 
     await writeFile(imagePath, pngBuffer);
+    await enforceCollageCacheLimit();
 
     const result = await printLocalCardPng(imagePath, {
       jobName: "ICLBooth collage",
