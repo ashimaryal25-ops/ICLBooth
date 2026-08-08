@@ -54,7 +54,7 @@ const INSTRUCTIONS_DURATION = 480; // 8 seconds at 60fps
 // who already know the controls jump straight past the 8-second wait.
 const SKIP_BTN = { x: 30, y: 30, w: 150, h: 56 };
 
-const startMusic = new Audio("Assets/start_sound.wav");
+const startMusic = new Audio("Assets/start_sound.mp3");
 startMusic.loop = true;
 startMusic.volume = 0.2;
 startMusic.muted = true;
@@ -71,7 +71,7 @@ let audioUnlocked = false;
 const score20Sound = new Audio("Assets/Score_20.mp3");
 score20Sound.muted = true;
 
-const lvl2BgSound = new Audio("Assets/lvl2_bgsound.wav");
+const lvl2BgSound = new Audio("Assets/lvl2_bgsound.mp3");
 lvl2BgSound.loop = true;
 lvl2BgSound.volume = 0.2;
 lvl2BgSound.muted = true;

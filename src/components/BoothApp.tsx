@@ -17,7 +17,7 @@ type Step = "choose" | "cardSetup" | "generating" | "reveal" | "collage";
 
 // Two builds of Ghost Runner. The home-screen tile runs the older self-playing
 // attract build (dimmed, with its own START overlay, no camera, no sound); going
-// fullscreen swaps in Raiyat's full game with Level 2, audio and hand tracking.
+// fullscreen swaps in Raiyat's current game with Level 2, audio and hand tracking.
 const ATTRACT_SRC = "/ghost-runner/attract.html";
 const GAME_SRC = "/ghost-runner/index.html";
 
@@ -160,24 +160,25 @@ export function BoothApp() {
       // the wrong one is wasted — the game would still download the real one.
       "/ghost-runner/style.css?v=2",
       // Keep in sync with the <script> tags in index.html and attract.html.
-      "/ghost-runner/game.js?v=1",
+      "/ghost-runner/game.js?v=11",
+      // The attract build is what the home tile actually loads first, so warm it
+      // too — it was missing here entirely.
       "/ghost-runner/attract.html",
-      "/ghost-runner/attract.js?v=1",
+      "/ghost-runner/attract.js?v=3",
       "/ghost-runner/Assets/background animation 1.mp4",
       "/ghost-runner/Assets/background_lvl2.mp4",
       "/ghost-runner/Assets/game_background.mp4",
-      "/ghost-runner/Assets/start_sound.wav",
+      "/ghost-runner/Assets/start_sound.mp3",
       "/ghost-runner/Assets/Obstacle_hitting_sound.mp3",
       "/ghost-runner/Assets/jump.wav",
       "/ghost-runner/Assets/Score_20.mp3",
-      "/ghost-runner/Assets/lvl2_bgsound.wav",
+      "/ghost-runner/Assets/lvl2_bgsound.mp3",
       "/ghost-runner/Assets/hand_pose_jump.png",
       "/ghost-runner/Assets/ghostgifani.gif",
       "/ghost-runner/Assets/enemyghost 1 gif ani.gif",
       "/ghost-runner/Assets/random ghost gif.gif",
       "/ghost-runner/Assets/bunny ani gif.gif",
       "/ghost-runner/Assets/squirl gift .gif",
-      "/ghost-runner/Assets/tree animations gif.gif",
       "/ghost-runner/Assets/lvl2_enemy.gif",
       "/ghost-runner/Assets/lvl2_enemy2.gif",
     ];
