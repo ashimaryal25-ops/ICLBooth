@@ -5,6 +5,11 @@ AI-generated collectible trading card, print a classic photo-strip collage, or p
 built-in arcade game — all running offline on the booth computer, driving a DNP dye-sub
 printer and a live camera mirror on a second screen.
 
+<p align="center">
+  <video src="https://github.com/ashimaryal25-ops/ICLBooth/raw/main/docs/booth-demo.mp4" controls muted width="320"></video>
+</p>
+<p align="center"><sub>Booth walkthrough — on-screen instructions and a live run.</sub></p>
+
 ## Demo
 
 ### Cardify — AI trading cards
