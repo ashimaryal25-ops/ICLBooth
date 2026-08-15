@@ -5,10 +5,15 @@ AI-generated collectible trading card, print a classic photo-strip collage, or p
 built-in arcade game — all running offline on the booth computer, driving a DNP dye-sub
 printer and a live camera mirror on a second screen.
 
-<p align="center">
-  <video src="https://github.com/ashimaryal25-ops/ICLBooth/raw/main/docs/booth-demo.mp4" controls muted width="320"></video>
-</p>
-<p align="center"><sub>Booth walkthrough — on-screen instructions and a live run.</sub></p>
+<!--
+  BOOTH WALKTHROUGH VIDEO — inline player setup (one-time, ~30s):
+  GitHub only renders an inline <video> for files UPLOADED through the web editor,
+  not for committed files referenced by URL. To embed it:
+    1. Open this README on github.com and click the pencil (Edit).
+    2. Drag docs/booth-demo.mp4 (4.5 MB, in this repo) into the editor on this line.
+    3. GitHub uploads it and inserts a https://github.com/user-attachments/... link
+       that renders a playable inline player. Commit the change.
+-->
 
 ## Demo
 
