@@ -7,8 +7,32 @@ printer and a live camera mirror on a second screen.
 
 ## Demo
 
+### Cardify — AI trading cards
+
 <p align="center">
-  <img src="docs/screenshots/03-card.png" alt="Generated ICLBooth trading card" width="320">
+  <img src="docs/screenshots/cards-row.png" alt="Sample ICLBooth trading cards — Athletic Blue, Empathy Pastel, and the rarest Gettysburg Gold" width="900">
+</p>
+
+<p align="center"><sub><em>Sample templates — portraits shown as placeholders.</em></sub></p>
+
+<p align="center">
+  <a href="https://youtu.be/plPjsD-zhac">
+    <img src="https://img.youtube.com/vi/plPjsD-zhac/hqdefault.jpg" alt="Watch the trading-card demo" width="480">
+  </a>
+  <br><sub>▶ Watch the trading-card demo (opens on YouTube)</sub>
+</p>
+
+### Photo collage
+
+<p align="center">
+  <img src="docs/screenshots/collage-frames.png" alt="Sample ICLBooth photo-strip frames — Doodle, Picnic, and Circuit" width="680">
+</p>
+
+<p align="center">
+  <a href="https://youtu.be/tysyFMtXq5c">
+    <img src="https://img.youtube.com/vi/tysyFMtXq5c/hqdefault.jpg" alt="Watch the photo-collage demo" width="480">
+  </a>
+  <br><sub>▶ Watch the photo-collage demo (opens on YouTube)</sub>
 </p>
 
 ## Features
