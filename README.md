@@ -5,6 +5,10 @@ AI-generated collectible trading card, print a classic photo-strip collage, or p
 built-in arcade game — all running offline on the booth computer, driving a DNP dye-sub
 printer and a live camera mirror on a second screen.
 
+<p align="center">
+  <img src="docs/booth-instructions.gif" alt="ICLBooth walkthrough — the booth, and how to use the Card Generator, GBOOTH photo strips, and Ghost Runner" width="760">
+</p>
+
 ## Demo
 
 ### Cardify — AI trading cards
