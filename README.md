@@ -92,6 +92,26 @@ only one display is connected).
 the roll drops below a threshold, re-arming when a fresh roll is loaded. Meant to run on a
 schedule.
 
+## Screenshots
+
+The home screen — one tap each into the trading card, the photo collage, or the arcade game:
+
+<p align="center">
+  <img src="docs/screenshots/booth-home.png" alt="ICLBooth home screen with four tiles: trading card, photo collage, Ghost Runner, and a welcome panel" width="820">
+</p>
+
+**Cardify** — capture and describe, then the generated card:
+
+| Capture & describe | Generated card |
+| --- | --- |
+| ![Card setup screen with photo, name and description fields, and an on-screen keyboard](docs/screenshots/booth-card-setup.png) | ![Finished trading card with title, traits, Campus Power, and special ability](docs/screenshots/booth-card-reveal.png) |
+
+**Photo collage** — pick a layout, capture the strip, decorate, and print:
+
+| Choose layout | Capture | Decorate | Finished strip |
+| --- | --- | --- | --- |
+| ![Layout picker for 2, 3, or 4 shots](docs/screenshots/booth-collage-layout.png) | ![Countdown capture view with four shot thumbnails](docs/screenshots/booth-collage-camera.png) | ![Decorate view with frame colours, filters, stickers, and frame themes](docs/screenshots/booth-collage-decorate.png) | ![Finished photo strip with Gettysburg College branding and a QR code](docs/screenshots/booth-collage-final.png) |
+
 ## How printing works — frontend vs. backend strips
 
 The DNP prints a full 4×6 sheet and cuts it down the centre into two 2×6 strips. There are
