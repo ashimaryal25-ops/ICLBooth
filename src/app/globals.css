@@ -23,6 +23,46 @@
   box-sizing: border-box;
 }
 
+/* --- Kiosk gesture lockdown ------------------------------------------------
+   Ghost touches and two-/three-finger "squeezes" used to break the booth by
+   triggering browser gestures: pinch-zoom, swipe-back navigation, pull-to-
+   refresh, long-press context menus, and accidental text/image selection or
+   drag. These rules neutralise all of that at the page level so a stray touch
+   can only ever land as a plain tap on a control. The Decorate canvas re-opts
+   into its own gesture handling with `touch-action: none` inline.
+
+   NOTE: this is the app layer only. It cannot stop Alt+F4, the Windows key,
+   Alt+Tab, or Windows edge-swipes — those must be locked at the Windows layer
+   (Assigned Access / Shell Launcher + Keyboard Filter). See KIOSK_SETUP.md. */
+html {
+  /* pan-x/pan-y keeps taps and scrolling; blocks pinch-zoom and rotate. */
+  touch-action: pan-x pan-y;
+  /* Kills swipe-to-go-back and pull-to-refresh from an overscroll flick. */
+  overscroll-behavior: none;
+  /* Stray touches can't smear a text selection across the UI. */
+  -webkit-user-select: none;
+  user-select: none;
+  /* No iOS/Android long-press callout bubble. */
+  -webkit-touch-callout: none;
+  /* Don't flash a grey tap highlight on ghost touches. */
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Images and canvases can't be dragged out of place or "torn off". */
+img,
+canvas {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+/* Text entry must still work: re-enable selection only inside real inputs. */
+input,
+textarea,
+[contenteditable="true"] {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 html {
   min-height: 100%;
   background: var(--background);

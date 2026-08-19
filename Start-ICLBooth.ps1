@@ -156,6 +156,13 @@ $commonFlags = @(
   "--disable-session-crashed-bubble",
   "--disable-pinch",
   "--overscroll-history-navigation=0",
+  # One combined --disable-features flag (Chrome only honours the last one, so
+  # every feature to disable must live in this single comma-joined list):
+  #   TouchpadOverscrollHistoryNavigation - kills the two-finger swipe-back/forward.
+  #   OverscrollHistoryNavigation          - kills the touchscreen swipe-back/forward.
+  "--disable-features=TouchpadOverscrollHistoryNavigation,OverscrollHistoryNavigation",
+  # Don't restore tabs or nag after a crash — the booth should just come back clean.
+  "--hide-crash-restore-bubble",
   "--autoplay-policy=no-user-gesture-required"
 )
 
