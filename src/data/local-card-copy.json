@@ -1,0 +1,652 @@
+{
+  "Builder": {
+    "titles": [
+      "Prototype Maker",
+      "Hands-On Builder",
+      "First Version Pro",
+      "Launch Pad",
+      "Maker Mindset",
+      "Tool Crafter"
+    ],
+    "knownFor": [
+      "turning rough ideas into working tools",
+      "making the first version before anyone overplans it",
+      "building useful things from limited resources",
+      "bringing concepts off the whiteboard",
+      "testing ideas through real materials",
+      "shipping something people can actually use"
+    ],
+    "specialAbilities": [
+      "Rapid Prototype",
+      "Build Mode",
+      "Practical Assembly",
+      "First Draft Launch",
+      "Toolbox Thinking",
+      "Hands-On Finish"
+    ]
+  },
+  "Creative": {
+    "titles": [
+      "Original Thinker",
+      "Visual Spark",
+      "Idea Stylist",
+      "Concept Artist",
+      "Fresh Angle",
+      "Design Instinct"
+    ],
+    "knownFor": [
+      "making ideas feel fresh and memorable",
+      "adding personality to ordinary moments",
+      "turning blank space into something expressive",
+      "finding a new angle when the obvious one feels flat",
+      "shaping visuals that people remember",
+      "bringing style and imagination into the work"
+    ],
+    "specialAbilities": [
+      "Fresh Concept",
+      "Visual Twist",
+      "Style Shift",
+      "Idea Remix",
+      "Creative Flow",
+      "Original Angle"
+    ]
+  },
+  "Leader": {
+    "titles": [
+      "Team Captain",
+      "Decision Driver",
+      "Group Anchor",
+      "Lead Voice",
+      "Direction Setter",
+      "Momentum Keeper"
+    ],
+    "knownFor": [
+      "getting people moving in the same direction",
+      "making decisions when the room is unsure",
+      "keeping the group focused on the goal",
+      "turning scattered effort into shared progress",
+      "stepping up when direction is needed",
+      "bringing confidence to team moments"
+    ],
+    "specialAbilities": [
+      "Clear Direction",
+      "Team Alignment",
+      "Decision Point",
+      "Lead Forward",
+      "Group Focus",
+      "Momentum Call"
+    ]
+  },
+  "Clutch": {
+    "titles": [
+      "Pressure Finisher",
+      "Last-Minute Pro",
+      "Deadline Closer",
+      "Calm Closer",
+      "Final Push",
+      "Moment Maker"
+    ],
+    "knownFor": [
+      "coming through when the clock is low",
+      "staying calm when the stakes rise",
+      "finishing strong under real pressure",
+      "turning tense moments into clean results",
+      "handling the final stretch without panic",
+      "delivering when everyone is counting on it"
+    ],
+    "specialAbilities": [
+      "Final Push",
+      "Pressure Calm",
+      "Deadline Finish",
+      "Late Spark",
+      "Clutch Focus",
+      "Tense Moment"
+    ]
+  },
+  "Supportive": {
+    "titles": [
+      "Team Backup",
+      "Steady Helper",
+      "Hype Anchor",
+      "Careful Wingmate",
+      "Group Support",
+      "Morale Builder"
+    ],
+    "knownFor": [
+      "helping others feel prepared and included",
+      "making the room feel easier to step into",
+      "checking in before people fall behind",
+      "lifting the team without needing the spotlight",
+      "creating calm when others feel overwhelmed",
+      "showing up when someone needs backup"
+    ],
+    "specialAbilities": [
+      "Steady Backup",
+      "Morale Lift",
+      "Helpful Check-In",
+      "Team Care",
+      "Calm Support",
+      "Quiet Assist"
+    ]
+  },
+  "Analytical": {
+    "titles": [
+      "Pattern Reader",
+      "Data Lens",
+      "Evidence Checker",
+      "Logic Tracker",
+      "Insight Finder",
+      "Tradeoff Thinker"
+    ],
+    "knownFor": [
+      "spotting patterns other people miss",
+      "breaking choices down with evidence",
+      "comparing options before making a call",
+      "turning messy information into clear insight",
+      "asking what the data actually shows",
+      "separating assumptions from useful signals"
+    ],
+    "specialAbilities": [
+      "Pattern Scan",
+      "Evidence Check",
+      "Tradeoff Map",
+      "Signal Finder",
+      "Logic Filter",
+      "Insight Breakout"
+    ]
+  },
+  "Energetic": {
+    "titles": [
+      "Energy Source",
+      "Fast Starter",
+      "Room Spark",
+      "Motion Maker",
+      "High Tempo",
+      "Vibe Charger"
+    ],
+    "knownFor": [
+      "bringing the room back to life",
+      "starting fast and keeping momentum up",
+      "turning quiet spaces into active ones",
+      "making group work feel more alive",
+      "bringing visible effort to every task",
+      "raising the pace when things get slow"
+    ],
+    "specialAbilities": [
+      "Momentum Burst",
+      "Room Charge",
+      "Fast Start",
+      "Tempo Lift",
+      "Active Spark",
+      "Vibe Boost"
+    ]
+  },
+  "Technical": {
+    "titles": [
+      "Systems Tuner",
+      "Code Operator",
+      "Tool Specialist",
+      "Debug Mind",
+      "Tech Navigator",
+      "Backend Brain"
+    ],
+    "knownFor": [
+      "solving problems inside the system",
+      "making tools work the way they should",
+      "debugging issues with patient focus",
+      "connecting details across code and hardware",
+      "turning technical confusion into working steps",
+      "understanding the moving parts behind the screen"
+    ],
+    "specialAbilities": [
+      "Debug Path",
+      "System Check",
+      "Tool Mastery",
+      "Code Trace",
+      "Tech Setup",
+      "Backend Fix"
+    ]
+  },
+  "Curious": {
+    "titles": [
+      "Question Chaser",
+      "Why Finder",
+      "Open Mind",
+      "Wonder Tracker",
+      "Learning Loop",
+      "Inquiry Spark"
+    ],
+    "knownFor": [
+      "asking the question that opens the room",
+      "digging deeper when an answer feels incomplete",
+      "following small details into bigger ideas",
+      "learning because the unknown feels exciting",
+      "turning confusion into a starting point",
+      "exploring topics beyond the first explanation"
+    ],
+    "specialAbilities": [
+      "Better Question",
+      "Deep Dive",
+      "Open Search",
+      "Wonder Loop",
+      "Curiosity Push",
+      "Next Why"
+    ]
+  },
+  "Organized": {
+    "titles": [
+      "Plan Keeper",
+      "Schedule Pro",
+      "Clean System",
+      "Task Tracker",
+      "Order Maker",
+      "Flow Manager"
+    ],
+    "knownFor": [
+      "keeping moving pieces easy to follow",
+      "turning chaos into a clear plan",
+      "tracking details before they become problems",
+      "making deadlines feel manageable",
+      "setting up systems that save time later",
+      "keeping the work clean from start to finish"
+    ],
+    "specialAbilities": [
+      "Task Map",
+      "Clean Plan",
+      "Deadline Grid",
+      "Flow Setup",
+      "Priority Sort",
+      "System Order"
+    ]
+  },
+  "Communicator": {
+    "titles": [
+      "Clear Voice",
+      "Message Maker",
+      "Bridge Builder",
+      "Room Translator",
+      "Signal Sender",
+      "Conversation Guide"
+    ],
+    "knownFor": [
+      "making complicated ideas easier to understand",
+      "saying the thing the room needs to hear",
+      "turning scattered thoughts into a clear message",
+      "helping people stay on the same page",
+      "speaking with clarity when details matter",
+      "bridging gaps between different perspectives"
+    ],
+    "specialAbilities": [
+      "Clear Message",
+      "Room Read",
+      "Idea Bridge",
+      "Signal Clarity",
+      "Plain Language",
+      "Conversation Flow"
+    ]
+  },
+  "Researcher": {
+    "titles": [
+      "Source Hunter",
+      "Deep Finder",
+      "Evidence Scout",
+      "Question Miner",
+      "Reference Pro",
+      "Knowledge Seeker"
+    ],
+    "knownFor": [
+      "finding reliable answers beneath the surface",
+      "tracking sources until the picture gets clearer",
+      "digging through details with patient focus",
+      "turning questions into useful evidence",
+      "checking what is true before moving forward",
+      "building understanding from careful investigation"
+    ],
+    "specialAbilities": [
+      "Source Trail",
+      "Evidence Hunt",
+      "Deep Search",
+      "Reference Check",
+      "Context Build",
+      "Knowledge Map"
+    ]
+  },
+  "Problem Solver": {
+    "titles": [
+      "Fix Finder",
+      "Solution Maker",
+      "Obstacle Reader",
+      "Path Clearer",
+      "Issue Breaker",
+      "Puzzle Planner"
+    ],
+    "knownFor": [
+      "finding a workable path through messy problems",
+      "breaking obstacles into steps people can use",
+      "staying with a challenge until it opens up",
+      "turning confusion into a next move",
+      "testing fixes until something holds",
+      "making progress when the answer is not obvious"
+    ],
+    "specialAbilities": [
+      "Next Move",
+      "Fix Loop",
+      "Obstacle Split",
+      "Solution Path",
+      "Issue Focus",
+      "Breakthrough Plan"
+    ]
+  },
+  "Mentor": {
+    "titles": [
+      "Growth Guide",
+      "Skill Coach",
+      "Advice Anchor",
+      "Learning Partner",
+      "Progress Guide",
+      "Patient Coach"
+    ],
+    "knownFor": [
+      "helping others grow without making them feel small",
+      "explaining the next step with patience",
+      "sharing experience in a way people can use",
+      "building confidence through steady guidance",
+      "spotting potential before others see it",
+      "making learning feel less intimidating"
+    ],
+    "specialAbilities": [
+      "Patient Guidance",
+      "Skill Lift",
+      "Confidence Build",
+      "Next Step",
+      "Growth Check",
+      "Helpful Feedback"
+    ]
+  },
+  "Adaptable": {
+    "titles": [
+      "Quick Adjuster",
+      "Flexible Mind",
+      "Change Ready",
+      "Shift Specialist",
+      "Pivot Pro",
+      "Steady Switch"
+    ],
+    "knownFor": [
+      "adjusting fast when the plan changes",
+      "staying useful in unpredictable situations",
+      "finding another route when the first one closes",
+      "keeping momentum through sudden shifts",
+      "learning the new rules without losing pace",
+      "making change feel manageable"
+    ],
+    "specialAbilities": [
+      "Quick Pivot",
+      "Flexible Route",
+      "Change Read",
+      "Plan Shift",
+      "Steady Adjust",
+      "Reset Move"
+    ]
+  },
+  "Reliable": {
+    "titles": [
+      "Steady Presence",
+      "Trust Anchor",
+      "Follow-Through Pro",
+      "Dependable Hand",
+      "Consistent Core",
+      "Promise Keeper"
+    ],
+    "knownFor": [
+      "showing up when the work matters",
+      "following through without needing reminders",
+      "being the person people can count on",
+      "keeping commitments even when it is inconvenient",
+      "bringing consistency to shared responsibilities",
+      "finishing the job with quiet discipline"
+    ],
+    "specialAbilities": [
+      "Follow Through",
+      "Steady Hand",
+      "Trust Build",
+      "Consistent Work",
+      "Commitment Check",
+      "Dependable Finish"
+    ]
+  },
+  "Bold": {
+    "titles": [
+      "Risk Taker",
+      "Big Move",
+      "Strong Signal",
+      "Fearless Start",
+      "Direct Voice",
+      "Brave Angle"
+    ],
+    "knownFor": [
+      "taking the first step when others hesitate",
+      "speaking up when the room gets quiet",
+      "choosing the bigger move when it matters",
+      "trying ideas before they feel fully safe",
+      "bringing courage to uncertain moments",
+      "making choices that stand out"
+    ],
+    "specialAbilities": [
+      "First Step",
+      "Big Ask",
+      "Courage Call",
+      "Direct Move",
+      "Risk Read",
+      "Standout Choice"
+    ]
+  },
+  "Collaborative": {
+    "titles": [
+      "Team Connector",
+      "Shared Effort",
+      "Group Builder",
+      "Co-Creator",
+      "Workmate Pro",
+      "Collective Spark"
+    ],
+    "knownFor": [
+      "turning individual effort into shared progress",
+      "making teamwork feel natural and productive",
+      "bringing different strengths into one plan",
+      "building ideas through real conversation",
+      "sharing credit while keeping the work moving",
+      "helping the group create something stronger together"
+    ],
+    "specialAbilities": [
+      "Team Sync",
+      "Shared Credit",
+      "Group Build",
+      "Strength Match",
+      "Co-Create",
+      "Work Flow"
+    ]
+  },
+  "Detail-Oriented": {
+    "titles": [
+      "Fine Print Pro",
+      "Precision Eye",
+      "Detail Keeper",
+      "Quality Checker",
+      "Careful Finisher",
+      "Sharp Reviewer"
+    ],
+    "knownFor": [
+      "catching small issues before they grow",
+      "noticing the detail everyone else skipped",
+      "making the final version feel polished",
+      "checking the work until it holds together",
+      "keeping quality high in the small parts",
+      "finding mistakes hidden in plain sight"
+    ],
+    "specialAbilities": [
+      "Precision Check",
+      "Small Catch",
+      "Quality Pass",
+      "Fine Review",
+      "Polish Sweep",
+      "Careful Scan"
+    ]
+  },
+  "Strategic": {
+    "titles": [
+      "Long Game",
+      "Priority Planner",
+      "Move Reader",
+      "Goal Mapper",
+      "Big Picture",
+      "Path Designer"
+    ],
+    "knownFor": [
+      "seeing how today’s choices shape tomorrow",
+      "planning moves around the bigger goal",
+      "prioritizing what matters most first",
+      "connecting short steps to long-term outcomes",
+      "choosing the path with the strongest payoff",
+      "thinking ahead before the pressure arrives"
+    ],
+    "specialAbilities": [
+      "Long Game",
+      "Priority Map",
+      "Goal Path",
+      "Next Move",
+      "Future Read",
+      "Outcome Focus"
+    ]
+  },
+  "Empathetic": {
+    "titles": [
+      "Emotion Reader",
+      "Careful Listener",
+      "Heart Sense",
+      "People Aware",
+      "Kind Signal",
+      "Feeling Finder"
+    ],
+    "knownFor": [
+      "noticing how people feel before they say it",
+      "listening for what is underneath the words",
+      "making others feel understood without forcing it",
+      "reading the emotional tone of the room",
+      "responding with care instead of assumptions",
+      "holding space when someone needs it"
+    ],
+    "specialAbilities": [
+      "Careful Listen",
+      "Tone Read",
+      "Kind Response",
+      "Feeling Check",
+      "Space Hold",
+      "Human Sense"
+    ]
+  },
+  "Innovative": {
+    "titles": [
+      "New Path",
+      "Idea Pioneer",
+      "Future Maker",
+      "Fresh System",
+      "Change Designer",
+      "Upgrade Mind"
+    ],
+    "knownFor": [
+      "finding better ways to do familiar things",
+      "turning new ideas into useful change",
+      "questioning old systems with practical intent",
+      "building improvements that feel ahead of the curve",
+      "connecting ideas in ways people did not expect",
+      "pushing the work beyond the usual version"
+    ],
+    "specialAbilities": [
+      "Fresh Method",
+      "System Upgrade",
+      "New Approach",
+      "Idea Leap",
+      "Better Way",
+      "Change Spark"
+    ]
+  },
+  "Performer": {
+    "titles": [
+      "Stage Ready",
+      "Spotlight Steady",
+      "Presence Pro",
+      "Crowd Connector",
+      "Live Moment",
+      "Showtime Voice"
+    ],
+    "knownFor": [
+      "bringing confidence when all eyes are on the moment",
+      "holding attention with presence and timing",
+      "turning preparation into a strong live delivery",
+      "making the room feel engaged and awake",
+      "staying composed in front of an audience",
+      "giving energy to the moment without overdoing it"
+    ],
+    "specialAbilities": [
+      "Stage Presence",
+      "Live Delivery",
+      "Audience Read",
+      "Showtime Calm",
+      "Strong Timing",
+      "Presence Lift"
+    ]
+  },
+  "Explorer": {
+    "titles": [
+      "Path Finder",
+      "New Terrain",
+      "Open Route",
+      "Beyond Familiar",
+      "World Seeker",
+      "Fresh Horizon"
+    ],
+    "knownFor": [
+      "stepping into unfamiliar spaces with interest",
+      "finding growth outside the usual routine",
+      "trying new routes before judging the map",
+      "turning new environments into learning moments",
+      "seeking experiences that expand the view",
+      "moving toward what feels undiscovered"
+    ],
+    "specialAbilities": [
+      "New Route",
+      "Open Map",
+      "Fresh Step",
+      "Horizon Scan",
+      "Experience Hunt",
+      "Unfamiliar Ground"
+    ]
+  },
+  "Storyteller": {
+    "titles": [
+      "Narrative Voice",
+      "Moment Shaper",
+      "Story Weaver",
+      "Scene Setter",
+      "Memory Maker",
+      "Meaning Builder"
+    ],
+    "knownFor": [
+      "turning experiences into stories people remember",
+      "making information feel human and connected",
+      "finding the thread that holds a moment together",
+      "bringing meaning to what happened",
+      "shaping details into a clear narrative",
+      "helping people feel the point, not just hear it"
+    ],
+    "specialAbilities": [
+      "Narrative Thread",
+      "Scene Set",
+      "Meaning Turn",
+      "Story Shape",
+      "Memory Hook",
+      "Human Detail"
+    ]
+  }
+}

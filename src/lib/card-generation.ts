@@ -1,8 +1,6 @@
 /**
- * Server-side card generation (OpenAI Responses API). Imported only by
- * src/app/api/generate-card/route.ts; the browser reaches this through the
- * client wrapper in src/lib/generate-card-client.ts. Falls back to a
- * deterministic local card when no OPENAI_API_KEY is configured.
+ * Server-side card generation. The kiosk defaults to the local classifier so
+ * card creation keeps working without an API key or network connection.
  */
 import { z } from "zod";
 import {
@@ -12,6 +10,8 @@ import {
 } from "@/lib/card-templates";
 import { cardSchema, raritySchema, type CardIdentity, type CardRequest } from "@/lib/card-schema";
 import { createFallbackCard } from "@/lib/fallback-card";
+import { createLocalCard } from "@/lib/local-card-copy";
+import { classifyCardTraits } from "@/lib/server-trait-classifier";
 import { gettysburgTheme } from "@/lib/themes";
 
 const CARD_IDENTITY_JSON_SCHEMA = {
@@ -166,12 +166,16 @@ function normalizeGeneratedCard(input: CardRequest, generated: unknown): CardIde
       "Campus Power": campusPower,
     },
     specialAbility: parsed.specialAbility,
-    description: `Known for ${parsed.knownFor.replace(/^known for\s+/i, "").replace(/\.$/, "")}.`,
+    description: parsed.knownFor.replace(/^known for\s+/i, "").replace(/\.$/, "").trim(),
     colorTheme: resolveTemplateId(parsed.rarity, parsed.colorTheme, input.selfDescription),
   });
 }
 
 export async function generateCard(input: CardRequest): Promise<CardIdentity> {
+  if (process.env.CARD_GENERATION_MODE !== "openai") {
+    return createLocalCard(input, (await classifyCardTraits(input.selfDescription)) ?? undefined);
+  }
+
   const model = process.env.OPENAI_MODEL ?? "gpt-5-mini";
   const apiKey = process.env.OPENAI_API_KEY;
 
