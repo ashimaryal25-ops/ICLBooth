@@ -48,6 +48,13 @@ and a matching background template. Output is structured JSON validated with Zod
 falls back to a deterministic local generator when no OpenAI key is set. The form supports
 speech-to-text and an on-screen keyboard.
 
+The offline card path includes a local Python/scikit-learn trait classifier
+(`ml/trait_classifier.py`, `ml/models/trait_classifier.joblib`). It uses TF-IDF word and
+character n-grams with `LinearSVC` to score 25 booth traits from the guest's typed
+self-description, then feeds those traits into the local card-copy generator. The checked-in
+training/eval data is about 3k examples; the latest benchmark recorded 92% training-split
+accuracy, 76% strict Top-3 accuracy, and 91% human-acceptable Top-3 accuracy.
+
 ### Photo collage
 The classic 2×6 strip flow: three-second countdown capture, plain-colour or custom-framed
 strips, and drag-from-palette sticker decoration (emoji and image stickers, pinch to resize).
@@ -151,8 +158,9 @@ generated, never edited by hand.
 
 ## Stack
 
-Next.js (App Router) · React · TypeScript · Tailwind CSS · OpenAI Responses API ·
-`better-sqlite3` · Zod · `html-to-image` · `qrcode` · `react-simple-keyboard`
+Next.js (App Router) · React · TypeScript · Tailwind CSS · Python · scikit-learn ·
+OpenAI Responses API · `better-sqlite3` · Zod · `html-to-image` · `qrcode` ·
+`react-simple-keyboard`
 
 ## Setup
 
